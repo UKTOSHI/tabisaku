@@ -45,15 +45,34 @@ input[type=text]{flex:1;min-width:200px;}
 .empty{color:var(--sub);font-size:13.5px;padding:40px 0;text-align:center;}
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center;padding:20px;}
 .modal-bg.open{display:flex;}
-.modal{background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;padding:28px;position:relative;}
+.modal{background:#fff;border-radius:16px;max-width:560px;width:100%;max-height:85vh;overflow-y:auto;padding:28px;position:relative;}
 .modal .close{position:absolute;top:14px;right:16px;border:none;background:none;font-size:20px;cursor:pointer;color:var(--sub);}
 .modal h2{margin:0 0 4px;font-size:22px;}
-.modal .sub{color:var(--sub);font-size:13px;margin-bottom:16px;}
-.modal dl{margin:0;}
-.modal dt{font-size:11.5px;color:var(--sub);margin-top:12px;}
-.modal dd{margin:2px 0 0;font-size:14px;line-height:1.7;}
-.modal .mtags{margin-top:14px;display:flex;flex-wrap:wrap;gap:6px;}
+.modal .sub{color:var(--sub);font-size:13px;margin-bottom:4px;}
+.modal .overview{font-size:14px;line-height:1.8;margin:14px 0 0;color:var(--ink);}
+.msection{border-radius:12px;padding:14px 16px;margin-top:14px;}
+.msection h4{margin:0 0 6px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;}
+.msection p{margin:0;font-size:13.5px;line-height:1.75;white-space:pre-line;}
+.msection.spots{background:#ecfdf5;border-left:4px solid #059669;}
+.msection.spots h4{color:#047857;}
+.msection.food{background:#fff7ed;border-left:4px solid #ea580c;}
+.msection.food h4{color:#c2410c;}
+.msection.price{background:#eff6ff;border-left:4px solid #2563eb;}
+.msection.price h4{color:#1d4ed8;}
+.price-asof{display:inline-block;font-size:10px;font-weight:700;background:#2563eb;color:#fff;border-radius:999px;padding:2px 9px;}
+.infogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:14px;}
+.infogrid .icell{background:var(--sand);border-radius:10px;padding:9px 12px;}
+.infogrid .icell .k{font-size:10.5px;color:var(--sub);margin-bottom:2px;}
+.infogrid .icell .v{font-size:13px;line-height:1.5;}
+.modal .linkrow{margin-top:14px;font-size:13px;}
+.modal .linkrow a{color:var(--teal);font-weight:700;}
+.modal .mtags{margin-top:16px;display:flex;flex-wrap:wrap;gap:6px;}
 .modal .mtags span{background:var(--sand);border-radius:999px;padding:4px 12px;font-size:12px;}
+.badge.reg-北米{background:#2563eb;}
+.badge.reg-南米{background:#dc2626;}
+.badge.reg-アジア{background:#ea580c;}
+.badge.reg-ヨーロッパ{background:#7c3aed;}
+.badge.reg-domestic{background:var(--teal);}
 </style>
 </head>
 <body>
@@ -65,7 +84,6 @@ input[type=text]{flex:1;min-width:200px;}
       <a href="cities.html" class="active">都市</a>
       <a href="airports.html">空港</a>
       <a href="cards.html">クレジットカード</a>
-      <a href="admin.html">管理</a>
     </nav>
   </div>
 </header>
@@ -224,7 +242,7 @@ function render(){
   if(!list.length){grid.innerHTML='<div class="empty">条件に一致する都市が見つかりませんでした。</div>';return;}
   grid.innerHTML=list.map(c=>`
     <div class="item" data-id="${c.id}">
-      <span class="badge">${c.is_domestic?(c.ts_prefectures?c.ts_prefectures.name:'国内'):c.country}</span>
+      <span class="badge reg-${c.is_domestic?'domestic':escapeHtml(c.region||'')}">${c.is_domestic?(c.ts_prefectures?c.ts_prefectures.name:'国内'):c.country}</span>
       <h3>${escapeHtml(c.name)}</h3>
       <p>${escapeHtml((c.description||'').slice(0,50))}${(c.description||'').length>50?'…':''}</p>
     </div>
@@ -238,19 +256,25 @@ function openModal(id){
   const c=cities.find(x=>x.id===id);
   if(!c)return;
   const t=(cityTagMap[c.id]||[]).map(tid=>tags.find(x=>x.id===tid)).filter(Boolean);
+  const infoCells=[
+    ['ベストシーズン',c.best_season],
+    ['タイムゾーン',c.timezone],
+    ['通貨',c.currency],
+    ['言語',c.language],
+    ['ビザ情報',c.visa_notes],
+    ['アクセス',c.access_info]
+  ].filter(([,v])=>v);
   document.getElementById('modalBody').innerHTML=`
     <h2>${escapeHtml(c.name)}</h2>
     <div class="sub">${escapeHtml(c.is_domestic?(c.ts_prefectures?c.ts_prefectures.name+'・日本':'日本'):c.country)}</div>
-    <dl>
-      ${c.description?`<dt>概要</dt><dd>${escapeHtml(c.description)}</dd>`:''}
-      ${c.best_season?`<dt>ベストシーズン</dt><dd>${escapeHtml(c.best_season)}</dd>`:''}
-      ${c.timezone?`<dt>タイムゾーン</dt><dd>${escapeHtml(c.timezone)}</dd>`:''}
-      ${c.currency?`<dt>通貨</dt><dd>${escapeHtml(c.currency)}</dd>`:''}
-      ${c.language?`<dt>言語</dt><dd>${escapeHtml(c.language)}</dd>`:''}
-      ${c.visa_notes?`<dt>ビザ情報</dt><dd>${escapeHtml(c.visa_notes)}</dd>`:''}
-      ${c.access_info?`<dt>アクセス</dt><dd>${escapeHtml(c.access_info)}</dd>`:''}
-      ${c.website_url?`<dt>関連リンク</dt><dd><a href="${escapeHtml(c.website_url)}" target="_blank" rel="noopener">${escapeHtml(c.website_url)}</a></dd>`:''}
-    </dl>
+    ${c.description?`<p class="overview">${escapeHtml(c.description)}</p>`:''}
+
+    ${c.spots_info?`<div class="msection spots"><h4>📍 観光スポット</h4><p>${escapeHtml(c.spots_info)}</p></div>`:''}
+    ${c.food_info?`<div class="msection food"><h4>🍴 おすすめグルメ</h4><p>${escapeHtml(c.food_info)}</p></div>`:''}
+    ${c.price_info?`<div class="msection price"><h4>💰 物価の目安 <span class="price-asof">2026年9月時点</span></h4><p>${escapeHtml(c.price_info.replace('【2026年9月頃の目安】',''))}</p></div>`:''}
+
+    ${infoCells.length?`<div class="infogrid">${infoCells.map(([k,v])=>`<div class="icell"><div class="k">${escapeHtml(k)}</div><div class="v">${escapeHtml(v)}</div></div>`).join('')}</div>`:''}
+    ${c.website_url?`<div class="linkrow"><a href="${escapeHtml(c.website_url)}" target="_blank" rel="noopener">関連リンクを見る →</a></div>`:''}
     ${t.length?`<div class="mtags">${t.map(x=>`<span>${escapeHtml(x.name)}</span>`).join('')}</div>`:''}
   `;
   document.getElementById('modalBg').classList.add('open');

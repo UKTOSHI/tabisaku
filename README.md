@@ -18,7 +18,7 @@
 | `cities.html` | 都市 検索・一覧（国内外） |
 | `airports.html` | 空港 検索・一覧 |
 | `cards.html` | 旅行系クレジットカード 比較・一覧 |
-| `admin.html` | 管理画面（都市/空港/カード/タグのCRUD、Supabase Auth認証必須） |
+| （管理画面） | 都市/空港/カード/タグのCRUD、Supabase Auth認証必須。URLは非公開（開発者に別途確認） |
 
 ## Supabaseテーブル
 
@@ -34,7 +34,7 @@
 
 ## 管理画面ログイン
 
-`admin.html` はレキサクと同じSupabase Authの管理者アカウント（`admin@rekisaku.com`）でログインする。
+管理画面はレキサクと同じSupabase Authの管理者アカウント（`admin@rekisaku.com`）でログインする。URL自体は推測されにくいパスにしてあるため、このREADMEには記載しない（開発者間で別途共有）。
 
 ## ローカル動作確認
 

@@ -69,11 +69,15 @@ input[type=text]{flex:1;min-width:200px;}
 .msection ruby{ruby-position:over;}
 .msection rt{font-size:10px;color:var(--sub);font-weight:500;user-select:none;}
 .price-asof{display:inline-block;font-size:10.5px;font-weight:700;background:#2563eb;color:#fff;border-radius:999px;padding:3px 10px;}
-table.ptable{width:100%;border-collapse:collapse;}
-table.ptable td{padding:9px 0;font-size:14px;border-top:1px solid rgba(0,0,0,.08);vertical-align:top;}
-table.ptable tr:first-child td{border-top:none;padding-top:0;}
-table.ptable td.plabel{color:var(--sub);white-space:nowrap;padding-right:14px;}
-table.ptable td.pval{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;}
+.ptable{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr);column-gap:8px;width:100%;}
+.ptable .prow{display:contents;}
+.ptable .prow>div{padding:9px 0;font-size:13.5px;border-top:1px solid rgba(0,0,0,.08);align-self:center;}
+.ptable .prow:first-child>div{border-top:none;padding-top:0;}
+.ptable .plabel{color:var(--sub);}
+.ptable .pval-jpy{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;}
+.ptable .pval-local{text-align:right;font-weight:500;font-variant-numeric:tabular-nums;color:var(--sub);font-size:12px;}
+.ptable .pval-jpy.full{grid-column:2/span 2;}
+.tip-note{margin:14px 0 0;padding-top:12px;border-top:1px dashed rgba(0,0,0,.15);font-size:12.5px;color:var(--sub);line-height:1.7;}
 .info-group{margin-top:22px;}
 .info-group h4{margin:0 0 10px;font-size:13px;font-weight:800;color:var(--sub);display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.03em;}
 .infogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
@@ -297,11 +301,11 @@ function openModal(id){
 
     ${c.spots_info?`<div class="msection spots"><h4>📍 観光スポット</h4><ul class="mlist">${splitSpotsInfo(c.spots_info).map(v=>`<li>${v}</li>`).join('')}</ul></div>`:''}
     ${c.food_info?`<div class="msection food"><h4>🍴 おすすめグルメ</h4><p>${escapeHtml(c.food_info)}</p></div>`:''}
-    ${c.price_hotel||c.price_meal||c.price_transport_value?`<div class="msection price"><h4>💰 物価の目安 <span class="price-asof">2026年9月時点</span></h4><table class="ptable">
-      ${c.price_hotel?`<tr><td class="plabel">ホテル1泊</td><td class="pval">${escapeHtml(c.price_hotel)}</td></tr>`:''}
-      ${c.price_meal?`<tr><td class="plabel">食事1食</td><td class="pval">${escapeHtml(c.price_meal)}</td></tr>`:''}
-      ${c.price_transport_value?`<tr><td class="plabel">${escapeHtml(c.price_transport_label||'交通')}</td><td class="pval">${escapeHtml(c.price_transport_value)}</td></tr>`:''}
-    </table></div>`:''}
+    ${c.price_hotel_jpy||c.price_meal_jpy||c.price_transport_jpy?`<div class="msection price"><h4>💰 物価の目安 <span class="price-asof">2026年9月時点</span></h4><div class="ptable">
+      ${c.price_hotel_jpy?`<div class="prow"><div class="plabel">ホテル1泊</div><div class="pval-jpy${c.price_hotel_local?'':' full'}">${escapeHtml(c.price_hotel_jpy)}</div>${c.price_hotel_local?`<div class="pval-local">${escapeHtml(c.price_hotel_local)}</div>`:''}</div>`:''}
+      ${c.price_meal_jpy?`<div class="prow"><div class="plabel">食事1食</div><div class="pval-jpy${c.price_meal_local?'':' full'}">${escapeHtml(c.price_meal_jpy)}</div>${c.price_meal_local?`<div class="pval-local">${escapeHtml(c.price_meal_local)}</div>`:''}</div>`:''}
+      ${c.price_transport_jpy?`<div class="prow"><div class="plabel">${escapeHtml(c.price_transport_label||'交通')}</div><div class="pval-jpy${c.price_transport_local?'':' full'}">${escapeHtml(c.price_transport_jpy)}</div>${c.price_transport_local?`<div class="pval-local">${escapeHtml(c.price_transport_local)}</div>`:''}</div>`:''}
+    </div>${c.tip_info?`<p class="tip-note">💡 チップ：${escapeHtml(c.tip_info)}</p>`:''}</div>`:''}
 
     ${infoGroups.map(([title,items])=>`
       <div class="info-group">

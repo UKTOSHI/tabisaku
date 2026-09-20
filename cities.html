@@ -82,12 +82,17 @@ input[type=text]{flex:1;min-width:200px;}
         <button data-val="domestic">国内</button>
         <button data-val="intl">海外</button>
       </div>
+    </div>
+    <div class="row">
       <select id="prefSelect"><option value="">都道府県（国内のみ）</option></select>
+      <select id="countrySelect"><option value="">国（海外のみ）</option></select>
+      <select id="citySelect"><option value="">都市を選択</option></select>
     </div>
     <div class="row">
       <div class="tags" id="tagFilters"></div>
     </div>
   </div>
+  <div class="count" id="countryFilterNotice" style="display:none;"></div>
 
   <div class="count" id="count"></div>
   <div class="grid" id="grid"><div class="empty">読み込み中…</div></div>
@@ -106,7 +111,7 @@ const SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZS
 const db=supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
 
 let cities=[], tags=[], cityTagMap={}, prefs=[];
-let state={q:'',domestic:'all',pref:'',tagIds:new Set()};
+let state={q:'',domestic:'all',pref:'',country:'',tagIds:new Set()};
 
 function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
 
@@ -126,6 +131,8 @@ async function load(){
   document.getElementById('prefSelect').innerHTML='<option value="">都道府県（国内のみ）</option>'+
     prefs.map(p=>`<option value="${p.id}">${p.name}</option>`).join('');
 
+  populateCountrySelect();
+
   document.getElementById('tagFilters').innerHTML=tags.map(t=>
     `<div class="tag-chip" data-id="${t.id}">${escapeHtml(t.name)}</div>`
   ).join('');
@@ -138,22 +145,79 @@ async function load(){
     });
   });
 
+  applyUrlParams();
   render();
+}
+
+const REGION_ORDER=['北米','南米','アジア','ヨーロッパ'];
+
+function populateCountrySelect(){
+  const byRegion=new Map();
+  cities.filter(c=>!c.is_domestic).forEach(c=>{
+    const region=c.region||'その他';
+    if(!byRegion.has(region))byRegion.set(region,new Set());
+    byRegion.get(region).add(c.country);
+  });
+  const regionKeys=[...byRegion.keys()].sort((a,b)=>{
+    const ia=REGION_ORDER.indexOf(a), ib=REGION_ORDER.indexOf(b);
+    return (ia<0?999:ia)-(ib<0?999:ib);
+  });
+  document.getElementById('countrySelect').innerHTML='<option value="">国（海外のみ）</option>'+
+    regionKeys.map(region=>`<optgroup label="${escapeHtml(region)}">${
+      [...byRegion.get(region)].sort().map(country=>`<option value="${escapeHtml(country)}">${escapeHtml(country)}</option>`).join('')
+    }</optgroup>`).join('');
+}
+
+function populateCitySelect(list){
+  const sel=document.getElementById('citySelect');
+  const current=sel.value;
+  sel.innerHTML='<option value="">都市を選択</option>'+
+    [...list].sort((a,b)=>(a.name_kana||a.name).localeCompare(b.name_kana||b.name,'ja')).map(c=>`<option value="${c.id}">${escapeHtml(c.name)}</option>`).join('');
+  if([...sel.options].some(o=>o.value===current))sel.value=current;
+}
+
+function applyUrlParams(){
+  const params=new URLSearchParams(location.search);
+  const domestic=params.get('domestic');
+  if(domestic==='1'){
+    state.domestic='domestic';
+    document.querySelectorAll('#domesticToggle button').forEach(b=>b.classList.toggle('active',b.dataset.val==='domestic'));
+  }else if(domestic==='0'){
+    state.domestic='intl';
+    document.querySelectorAll('#domesticToggle button').forEach(b=>b.classList.toggle('active',b.dataset.val==='intl'));
+  }
+  const country=params.get('country');
+  if(country){
+    state.country=country;
+    state.domestic='intl';
+    document.querySelectorAll('#domesticToggle button').forEach(b=>b.classList.toggle('active',b.dataset.val==='intl'));
+    document.getElementById('countrySelect').value=country;
+    const notice=document.getElementById('countryFilterNotice');
+    notice.style.display='block';
+    notice.innerHTML=`「${escapeHtml(country)}」の都市に絞り込み中 <a href="cities.html" style="color:var(--teal);font-weight:700;">（解除）</a>`;
+  }
+  const q=params.get('q');
+  if(q){state.q=q;document.getElementById('q').value=q;}
 }
 
 function render(){
   const q=state.q.trim().toLowerCase();
-  let list=cities.filter(c=>{
+  const baseList=cities.filter(c=>{
     if(state.domestic==='domestic'&&!c.is_domestic)return false;
     if(state.domestic==='intl'&&c.is_domestic)return false;
     if(state.pref&&String(c.prefecture_id)!==state.pref)return false;
-    if(q&&![c.name,c.name_kana,c.name_en].some(v=>(v||'').toLowerCase().includes(q)))return false;
+    if(state.country&&c.country!==state.country)return false;
     if(state.tagIds.size){
       const t=cityTagMap[c.id]||[];
       if(![...state.tagIds].every(id=>t.includes(id)))return false;
     }
     return true;
   });
+  populateCitySelect(baseList);
+
+  let list=baseList.filter(c=>
+    !q||[c.name,c.name_kana,c.name_en].some(v=>(v||'').toLowerCase().includes(q))
+  );
 
   document.getElementById('count').textContent=`${list.length}件の都市`;
   const grid=document.getElementById('grid');
@@ -197,6 +261,15 @@ document.getElementById('modalBg').addEventListener('click',e=>{if(e.target.id==
 
 document.getElementById('q').addEventListener('input',e=>{state.q=e.target.value;render();});
 document.getElementById('prefSelect').addEventListener('change',e=>{state.pref=e.target.value;render();});
+document.getElementById('countrySelect').addEventListener('change',e=>{
+  state.country=e.target.value;
+  document.getElementById('countryFilterNotice').style.display='none';
+  render();
+});
+document.getElementById('citySelect').addEventListener('change',e=>{
+  if(!e.target.value)return;
+  openModal(Number(e.target.value));
+});
 document.querySelectorAll('#domesticToggle button').forEach(btn=>{
   btn.addEventListener('click',()=>{
     document.querySelectorAll('#domesticToggle button').forEach(b=>b.classList.remove('active'));

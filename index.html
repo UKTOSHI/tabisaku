@@ -74,6 +74,25 @@ section.featured h2{font-size:20px;border-left:5px solid var(--teal);padding-lef
 .feat-item p{margin:0;font-size:12.5px;color:var(--sub);line-height:1.6;}
 footer{border-top:1px solid var(--border);padding:24px 20px;text-align:center;font-size:12px;color:var(--sub);}
 footer a{color:var(--teal);}
+
+section.finder{max-width:1080px;margin:0 auto;padding:0 20px 40px;}
+.finder-panel{background:var(--card-bg);border:1px solid var(--border);border-radius:16px;padding:28px 24px;}
+.finder-crumbs{display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:13px;color:var(--sub);margin-bottom:18px;}
+.finder-crumbs button{background:none;border:none;color:var(--teal);font-weight:700;font-size:13px;cursor:pointer;padding:2px 0;font-family:inherit;}
+.finder-crumbs button:hover{text-decoration:underline;}
+.finder-crumbs .sep{color:var(--border);}
+.finder-title{font-size:16px;font-weight:700;margin:0 0 16px;}
+.finder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;}
+.finder-grid.start{grid-template-columns:repeat(auto-fit,minmax(220px,1fr));}
+.finder-btn{display:block;width:100%;text-align:left;background:var(--sand);border:1px solid var(--border);border-radius:12px;padding:16px 16px;font-family:inherit;font-size:14.5px;font-weight:700;color:var(--ink);cursor:pointer;transition:background .15s, transform .15s;}
+.finder-btn:hover{background:#fff;border-color:var(--teal);transform:translateY(-2px);}
+.finder-btn .sub{display:block;font-weight:500;font-size:12px;color:var(--sub);margin-top:4px;}
+.finder-btn.start-btn{padding:22px 18px;font-size:17px;}
+.finder-btn.start-btn .emoji{font-size:26px;display:block;margin-bottom:6px;}
+.finder-btn.city-btn{font-weight:500;font-size:13.5px;background:#fff;}
+.finder-empty{color:var(--sub);font-size:13.5px;padding:20px 0;}
+.finder-footer-link{margin-top:18px;font-size:13px;}
+.finder-footer-link a{color:var(--teal);font-weight:700;}
 </style>
 </head>
 <body>
@@ -93,6 +112,15 @@ footer a{color:var(--teal);}
 <section class="hero">
   <h1>旅の情報を、まるごと検索。</h1>
   <p>国内外の主要都市、成田・羽田をはじめとする空港、マイルやラウンジ特典で選ぶ旅行系クレジットカード。旅の計画に必要な情報を旅索（タビサク）でまとめて検索できます。</p>
+</section>
+
+<section class="finder">
+  <div class="finder-panel">
+    <div class="finder-crumbs" id="finderCrumbs"></div>
+    <p class="finder-title" id="finderTitle">どこへ行きますか？</p>
+    <div class="finder-grid" id="finderGrid">読み込み中…</div>
+    <p class="finder-footer-link" id="finderFooterLink"></p>
+  </div>
 </section>
 
 <div class="cards">
@@ -142,6 +170,108 @@ const db=supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
     </div>
   `).join('');
 })();
+
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+const REGION_ORDER=['北米','南米','アジア','ヨーロッパ'];
+let finderRegions=[]; // [{region, countries:[{country, cities:[{id,name}]}]}]
+let finderState={step:'root', region:null, country:null};
+
+async function initFinder(){
+  const {data,error}=await db.from('ts_cities').select('id,name,country,region').eq('status',true).eq('is_domestic',false).order('id');
+  if(error||!data){finderRegions=[];renderFinder();return;}
+  const byRegion=new Map();
+  data.forEach(c=>{
+    if(!c.region)return;
+    if(!byRegion.has(c.region))byRegion.set(c.region,new Map());
+    const byCountry=byRegion.get(c.region);
+    if(!byCountry.has(c.country))byCountry.set(c.country,[]);
+    byCountry.get(c.country).push({id:c.id,name:c.name});
+  });
+  const regionKeys=[...byRegion.keys()].sort((a,b)=>{
+    const ia=REGION_ORDER.indexOf(a), ib=REGION_ORDER.indexOf(b);
+    return (ia<0?999:ia)-(ib<0?999:ib);
+  });
+  finderRegions=regionKeys.map(region=>({
+    region,
+    countries:[...byRegion.get(region).entries()].map(([country,cities])=>({country,cities}))
+  }));
+  renderFinder();
+}
+
+function finderGo(step,region,country){
+  finderState={step,region,country};
+  renderFinder();
+}
+
+function renderFinder(){
+  const crumbs=document.getElementById('finderCrumbs');
+  const title=document.getElementById('finderTitle');
+  const grid=document.getElementById('finderGrid');
+  const footer=document.getElementById('finderFooterLink');
+
+  const crumbParts=[`<button type="button" data-step="root">どこへ行きますか？</button>`];
+  if(finderState.region)crumbParts.push(`<span class="sep">›</span><button type="button" data-step="region" data-region="${escapeHtml(finderState.region)}">${escapeHtml(finderState.region)}</button>`);
+  if(finderState.country)crumbParts.push(`<span class="sep">›</span><span>${escapeHtml(finderState.country)}</span>`);
+  crumbs.innerHTML=finderState.step==='root'?'':crumbParts.join('');
+
+  if(finderState.step==='root'){
+    title.textContent='どこへ行きますか？';
+    grid.className='finder-grid start';
+    grid.innerHTML=`
+      <a class="finder-btn start-btn" href="cities.html?domestic=1"><span class="emoji">🗾</span>国内旅行<span class="sub">日本国内の都市を探す</span></a>
+      <button type="button" class="finder-btn start-btn" data-step="region"><span class="emoji">🌍</span>海外旅行<span class="sub">エリアから都市を探す</span></button>
+    `;
+    footer.innerHTML='';
+  }else if(finderState.step==='region'){
+    title.textContent='エリアを選んでください';
+    grid.className='finder-grid';
+    if(!finderRegions.length){grid.innerHTML='<div class="finder-empty">現在表示できるエリアがありません。</div>';}
+    else{
+      grid.innerHTML=finderRegions.map(r=>{
+        const cityCount=r.countries.reduce((n,c)=>n+c.cities.length,0);
+        return `<button type="button" class="finder-btn" data-step="country" data-region="${escapeHtml(r.region)}">${escapeHtml(r.region)}<span class="sub">${r.countries.length}カ国・${cityCount}都市</span></button>`;
+      }).join('');
+    }
+    footer.innerHTML='<a href="cities.html?domestic=0">海外の都市をすべて見る →</a>';
+  }else if(finderState.step==='country'){
+    const r=finderRegions.find(x=>x.region===finderState.region);
+    title.textContent=`${finderState.region}の国を選んでください`;
+    grid.className='finder-grid';
+    if(!r||!r.countries.length){grid.innerHTML='<div class="finder-empty">現在表示できる国がありません。</div>';}
+    else{
+      grid.innerHTML=r.countries.map(c=>
+        `<button type="button" class="finder-btn" data-step="city" data-region="${escapeHtml(finderState.region)}" data-country="${escapeHtml(c.country)}">${escapeHtml(c.country)}<span class="sub">${c.cities.length}都市</span></button>`
+      ).join('');
+    }
+    footer.innerHTML='';
+  }else if(finderState.step==='city'){
+    const r=finderRegions.find(x=>x.region===finderState.region);
+    const c=r&&r.countries.find(x=>x.country===finderState.country);
+    title.textContent=`${finderState.country}の都市を選んでください`;
+    grid.className='finder-grid';
+    if(!c||!c.cities.length){grid.innerHTML='<div class="finder-empty">現在表示できる都市がありません。</div>';}
+    else{
+      grid.innerHTML=c.cities.map(city=>
+        `<a class="finder-btn city-btn" href="cities.html?q=${encodeURIComponent(city.name)}">${escapeHtml(city.name)}</a>`
+      ).join('');
+    }
+    footer.innerHTML=`<a href="cities.html?country=${encodeURIComponent(finderState.country)}">${escapeHtml(finderState.country)}の都市をすべて見る →</a>`;
+  }
+}
+
+document.getElementById('finderCrumbs').addEventListener('click',e=>{
+  const btn=e.target.closest('button[data-step]');
+  if(!btn)return;
+  finderGo(btn.dataset.step,btn.dataset.region||null,null);
+});
+document.getElementById('finderGrid').addEventListener('click',e=>{
+  const btn=e.target.closest('button[data-step]');
+  if(!btn)return;
+  finderGo(btn.dataset.step,btn.dataset.region||null,btn.dataset.country||null);
+});
+
+initFinder();
 </script>
 </body>
 </html>

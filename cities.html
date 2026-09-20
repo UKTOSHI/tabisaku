@@ -51,29 +51,38 @@ input[type=text]{flex:1;min-width:200px;}
   .modal-bg{padding:24px;}
   .modal{border-radius:16px;max-width:680px;height:auto;max-height:92vh;padding:32px;}
 }
-.modal h2{margin:0 0 4px;font-size:22px;}
-.modal .sub{color:var(--sub);font-size:13px;margin-bottom:4px;}
-.modal .overview{font-size:14px;line-height:1.8;margin:14px 0 0;color:var(--ink);}
-.msection{border-radius:12px;padding:14px 16px;margin-top:14px;}
-.msection h4{margin:0 0 6px;font-size:13px;font-weight:700;display:flex;align-items:center;gap:6px;}
-.msection p{margin:0;font-size:13.5px;line-height:1.75;white-space:pre-line;}
-.msection.spots{background:#ecfdf5;border-left:4px solid #059669;}
+.modal h2{margin:0 0 6px;font-size:26px;font-weight:900;line-height:1.3;}
+.modal .sub{display:inline-block;color:var(--teal);background:#ecfdf5;font-size:13px;font-weight:700;padding:3px 12px;border-radius:999px;margin-bottom:4px;}
+.modal .overview{font-size:15.5px;line-height:1.9;margin:18px 0 0;color:var(--ink);padding:14px 16px;background:var(--sand);border-radius:12px;}
+.msection{border-radius:14px;padding:16px 18px;margin-top:20px;box-shadow:0 1px 2px rgba(0,0,0,.04);}
+.msection h4{margin:0 0 10px;font-size:14.5px;font-weight:800;display:flex;align-items:center;gap:7px;}
+.msection p{margin:0;font-size:14px;line-height:1.85;white-space:pre-line;}
+.msection.spots{background:#ecfdf5;border-left:5px solid #059669;}
 .msection.spots h4{color:#047857;}
-.msection.food{background:#fff7ed;border-left:4px solid #ea580c;}
+.msection.food{background:#fff7ed;border-left:5px solid #ea580c;}
 .msection.food h4{color:#c2410c;}
-.msection.price{background:#eff6ff;border-left:4px solid #2563eb;}
+.msection.price{background:#eff6ff;border-left:5px solid #2563eb;}
 .msection.price h4{color:#1d4ed8;}
 .msection ul.mlist{margin:0;padding:0;list-style:none;}
-.msection ul.mlist li{padding:6px 0;font-size:13.5px;line-height:1.6;border-top:1px solid rgba(0,0,0,.07);}
+.msection ul.mlist li{padding:8px 0;font-size:14px;line-height:1.7;border-top:1px solid rgba(0,0,0,.07);}
 .msection ul.mlist li:first-child{border-top:none;padding-top:0;}
-.price-asof{display:inline-block;font-size:10px;font-weight:700;background:#2563eb;color:#fff;border-radius:999px;padding:2px 9px;}
-.infogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:14px;}
-.infogrid .icell{background:var(--sand);border-radius:10px;padding:9px 12px;}
-.infogrid .icell .k{font-size:10.5px;color:var(--sub);margin-bottom:2px;}
-.infogrid .icell .v{font-size:13px;line-height:1.5;}
-.modal .linkrow{margin-top:14px;font-size:13px;}
+.msection ruby{ruby-position:over;}
+.msection rt{font-size:10px;color:var(--sub);font-weight:500;user-select:none;}
+.price-asof{display:inline-block;font-size:10.5px;font-weight:700;background:#2563eb;color:#fff;border-radius:999px;padding:3px 10px;}
+table.ptable{width:100%;border-collapse:collapse;}
+table.ptable td{padding:9px 0;font-size:14px;border-top:1px solid rgba(0,0,0,.08);vertical-align:top;}
+table.ptable tr:first-child td{border-top:none;padding-top:0;}
+table.ptable td.plabel{color:var(--sub);white-space:nowrap;padding-right:14px;}
+table.ptable td.pval{text-align:right;font-weight:800;font-variant-numeric:tabular-nums;}
+.info-group{margin-top:22px;}
+.info-group h4{margin:0 0 10px;font-size:13px;font-weight:800;color:var(--sub);display:flex;align-items:center;gap:6px;text-transform:uppercase;letter-spacing:.03em;}
+.infogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:10px;}
+.infogrid .icell{background:var(--sand);border-radius:12px;padding:11px 14px;}
+.infogrid .icell .k{font-size:11px;color:var(--sub);margin-bottom:3px;display:flex;align-items:center;gap:4px;}
+.infogrid .icell .v{font-size:14px;line-height:1.6;font-weight:500;}
+.modal .linkrow{margin-top:20px;font-size:14px;}
 .modal .linkrow a{color:var(--teal);font-weight:700;}
-.modal .mtags{margin-top:16px;display:flex;flex-wrap:wrap;gap:6px;}
+.modal .mtags{margin-top:22px;display:flex;flex-wrap:wrap;gap:6px;}
 .modal .mtags span{background:var(--sand);border-radius:999px;padding:4px 12px;font-size:12px;}
 .badge.reg-北米{background:#2563eb;}
 .badge.reg-南米{background:#dc2626;}
@@ -259,9 +268,6 @@ function render(){
   });
 }
 
-function splitPriceInfo(text){
-  return text.replace('【2026年9月頃の目安】','').split('／').map(s=>s.trim()).filter(Boolean);
-}
 function splitSpotsInfo(text){
   return text.split(/(?=[①②③④⑤⑥⑦⑧⑨⑩])/).map(s=>s.trim()).filter(Boolean);
 }
@@ -270,26 +276,39 @@ function openModal(id){
   const c=cities.find(x=>x.id===id);
   if(!c)return;
   const t=(cityTagMap[c.id]||[]).map(tid=>tags.find(x=>x.id===tid)).filter(Boolean);
-  const infoCells=[
-    ['東京からのフライト時間',c.flight_time_from_tokyo],
-    ['日本との時差',c.time_diff],
-    ['ベストシーズン',c.best_season],
-    ['タイムゾーン',c.timezone],
-    ['通貨',c.currency],
-    ['言語',c.language],
-    ['ビザ情報',c.visa_notes],
-    ['アクセス',c.access_info]
-  ].filter(([,v])=>v);
+  const infoGroups=[
+    ['✈️ 旅のプランニング',[
+      ['✈️','東京からのフライト時間',c.flight_time_from_tokyo],
+      ['🕐','日本との時差',c.time_diff],
+      ['☀️','ベストシーズン',c.best_season],
+      ['🌐','タイムゾーン',c.timezone]
+    ]],
+    ['📋 実用情報',[
+      ['💴','通貨',c.currency],
+      ['🗣️','言語',c.language],
+      ['📋','ビザ情報',c.visa_notes],
+      ['🚗','アクセス',c.access_info]
+    ]]
+  ].map(([title,items])=>[title,items.filter(([,,v])=>v)]).filter(([,items])=>items.length);
   document.getElementById('modalBody').innerHTML=`
     <h2>${escapeHtml(c.name)}</h2>
     <div class="sub">${escapeHtml(c.is_domestic?(c.ts_prefectures?c.ts_prefectures.name+'・日本':'日本'):c.country)}</div>
     ${c.description?`<p class="overview">${escapeHtml(c.description)}</p>`:''}
 
-    ${c.spots_info?`<div class="msection spots"><h4>📍 観光スポット</h4><ul class="mlist">${splitSpotsInfo(c.spots_info).map(v=>`<li>${escapeHtml(v)}</li>`).join('')}</ul></div>`:''}
+    ${c.spots_info?`<div class="msection spots"><h4>📍 観光スポット</h4><ul class="mlist">${splitSpotsInfo(c.spots_info).map(v=>`<li>${v}</li>`).join('')}</ul></div>`:''}
     ${c.food_info?`<div class="msection food"><h4>🍴 おすすめグルメ</h4><p>${escapeHtml(c.food_info)}</p></div>`:''}
-    ${c.price_info?`<div class="msection price"><h4>💰 物価の目安 <span class="price-asof">2026年9月時点</span></h4><ul class="mlist">${splitPriceInfo(c.price_info).map(v=>`<li>${escapeHtml(v)}</li>`).join('')}</ul></div>`:''}
+    ${c.price_hotel||c.price_meal||c.price_transport_value?`<div class="msection price"><h4>💰 物価の目安 <span class="price-asof">2026年9月時点</span></h4><table class="ptable">
+      ${c.price_hotel?`<tr><td class="plabel">ホテル1泊</td><td class="pval">${escapeHtml(c.price_hotel)}</td></tr>`:''}
+      ${c.price_meal?`<tr><td class="plabel">食事1食</td><td class="pval">${escapeHtml(c.price_meal)}</td></tr>`:''}
+      ${c.price_transport_value?`<tr><td class="plabel">${escapeHtml(c.price_transport_label||'交通')}</td><td class="pval">${escapeHtml(c.price_transport_value)}</td></tr>`:''}
+    </table></div>`:''}
 
-    ${infoCells.length?`<div class="infogrid">${infoCells.map(([k,v])=>`<div class="icell"><div class="k">${escapeHtml(k)}</div><div class="v">${escapeHtml(v)}</div></div>`).join('')}</div>`:''}
+    ${infoGroups.map(([title,items])=>`
+      <div class="info-group">
+        <h4>${title}</h4>
+        <div class="infogrid">${items.map(([icon,k,v])=>`<div class="icell"><div class="k">${icon} ${escapeHtml(k)}</div><div class="v">${escapeHtml(v)}</div></div>`).join('')}</div>
+      </div>
+    `).join('')}
     ${c.website_url?`<div class="linkrow"><a href="${escapeHtml(c.website_url)}" target="_blank" rel="noopener">関連リンクを見る →</a></div>`:''}
     ${t.length?`<div class="mtags">${t.map(x=>`<span>${escapeHtml(x.name)}</span>`).join('')}</div>`:''}
   `;

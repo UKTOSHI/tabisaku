@@ -257,6 +257,8 @@ function openModal(id){
   if(!c)return;
   const t=(cityTagMap[c.id]||[]).map(tid=>tags.find(x=>x.id===tid)).filter(Boolean);
   const infoCells=[
+    ['東京からのフライト時間',c.flight_time_from_tokyo],
+    ['日本との時差',c.time_diff],
     ['ベストシーズン',c.best_season],
     ['タイムゾーン',c.timezone],
     ['通貨',c.currency],

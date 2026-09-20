@@ -40,7 +40,7 @@
 
 ## 🚧 現在の作業
 
-**初期構築完了・Vercel本番反映済み（2026-09-20）。コード変更あり（新規プロジェクト一式）・DB変更あり（`ts_`系テーブル新規作成）。当面の大きな宿題なし。次に着手するとしたら実データ投入（都市・空港・カードの本追加）とOGP画像・favicon整備。**
+**初期構築完了・Vercel本番反映済み（2026-09-20）。CLAUDE.md追加はローカルコミットのみ・GitHub未push（コミット`9ef4b42`）。コード変更あり（新規プロジェクト一式）・DB変更あり（`ts_`系テーブル新規作成）。当面の大きな宿題なし。次に着手するとしたら実データ投入（都市・空港・カードの本追加）とOGP画像・favicon整備、およびCLAUDE.md更新分のpush。**
 
 - ✅ **旅索（タビサク）初期構築（完了・main反映済み 2026-09-20）**: ユーザー依頼「レキサクと同じシステム構成で、日本国内・海外の旅行情報（都市・空港・クレジットカード）を検索できるDBサイトを作って」に対応
   - Supabase共有プロジェクト（`sunxpjbdvidftukiutxg`）に`ts_`プレフィックスの新規テーブル群を作成。レキサクの`prefectures`は再利用せず、ユーザー指示「データは分ける」に従い`ts_prefectures`を独自に新設してデータ完全分離
@@ -63,3 +63,4 @@
 - **動作確認**: `.claude/launch.json`で`npx serve .`のローカルサーバーを起動し、Browserツールで全ページを検証。index/cities/airports/cardsでSupabaseからのデータ取得・フィルタ・モーダル表示が正常動作、admin.htmlのログインゲートが誤パスワードで正しく拒否されることを確認。コンソールエラーなし
 - **Git/デプロイ**: ローカルでgit init→コミット。GitHubへの未ログインを検知したためユーザーにログインを依頼→ログイン後、Claude in Chromeで`github.com/new`から`UKTOSHI/tabisaku`（Public、空リポジトリ）を作成。ユーザーに都度確認（AskUserQuestion）を取ってから`git push -u origin main`（auto modeのBash分類器が最初のpush試行をブロック→ユーザーに再確認して実行）。続けてVercelにログイン済みのChromeセッションで`vercel.com/new`からGitHubリポジトリをインポートし、Root Directory`./`・環境変数なしでデプロイ。本番URL`https://tabisaku.vercel.app`（プロジェクト設定のDomainsタブで確認、デプロイ直後のハッシュ付きURLとは別）で動作確認済み
 - **教訓**: git push・GitHubリポジトリ作成・Vercelデプロイのような共有システムへの操作は、事前にプラン承認を得ていても実行の都度ユーザーに確認を取るべき（auto modeのBash分類器もpushを自動ブロックする挙動だった）。また「本番URL」を聞かれた際、デプロイ直後にVercelが返すハッシュ付きURL（`tabisaku-xxxxx-uktoshis-projects.vercel.app`）は個別デプロイのプレビューURLであり、安定した本番ドメイン（`tabisaku.vercel.app`）はプロジェクト設定のDomainsタブで別途確認する必要がある
+- ユーザーから「Claude.mdを作成して」の指示を受け、本ファイル（`CLAUDE.md`）をグローバル設定のプロジェクト一覧に倣った形式（技術構成・DBスキーマ・🚧現在の作業・📝セッションログ）で新規作成し、レキサクの`CLAUDE.md`の書式（現在の作業＝太字サマリ＋✅完了ログ、セッションログ＝日付見出し＋箇条書き）を踏襲。ローカルでコミット（`9ef4b42`）のみ実施し、GitHubへのpushは今回未実施（ユーザーが「終了」と言うたびに現在の作業・セッションログを更新する運用は今後も継続）

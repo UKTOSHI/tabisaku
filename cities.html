@@ -63,6 +63,9 @@ input[type=text]{flex:1;min-width:200px;}
 .msection.food h4{color:#c2410c;}
 .msection.price{background:#eff6ff;border-left:4px solid #2563eb;}
 .msection.price h4{color:#1d4ed8;}
+.msection ul.mlist{margin:0;padding:0;list-style:none;}
+.msection ul.mlist li{padding:6px 0;font-size:13.5px;line-height:1.6;border-top:1px solid rgba(0,0,0,.07);}
+.msection ul.mlist li:first-child{border-top:none;padding-top:0;}
 .price-asof{display:inline-block;font-size:10px;font-weight:700;background:#2563eb;color:#fff;border-radius:999px;padding:2px 9px;}
 .infogrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:8px;margin-top:14px;}
 .infogrid .icell{background:var(--sand);border-radius:10px;padding:9px 12px;}
@@ -256,6 +259,13 @@ function render(){
   });
 }
 
+function splitPriceInfo(text){
+  return text.replace('【2026年9月頃の目安】','').split('／').map(s=>s.trim()).filter(Boolean);
+}
+function splitSpotsInfo(text){
+  return text.split(/(?=[①②③④⑤⑥⑦⑧⑨⑩])/).map(s=>s.trim()).filter(Boolean);
+}
+
 function openModal(id){
   const c=cities.find(x=>x.id===id);
   if(!c)return;
@@ -275,9 +285,9 @@ function openModal(id){
     <div class="sub">${escapeHtml(c.is_domestic?(c.ts_prefectures?c.ts_prefectures.name+'・日本':'日本'):c.country)}</div>
     ${c.description?`<p class="overview">${escapeHtml(c.description)}</p>`:''}
 
-    ${c.spots_info?`<div class="msection spots"><h4>📍 観光スポット</h4><p>${escapeHtml(c.spots_info)}</p></div>`:''}
+    ${c.spots_info?`<div class="msection spots"><h4>📍 観光スポット</h4><ul class="mlist">${splitSpotsInfo(c.spots_info).map(v=>`<li>${escapeHtml(v)}</li>`).join('')}</ul></div>`:''}
     ${c.food_info?`<div class="msection food"><h4>🍴 おすすめグルメ</h4><p>${escapeHtml(c.food_info)}</p></div>`:''}
-    ${c.price_info?`<div class="msection price"><h4>💰 物価の目安 <span class="price-asof">2026年9月時点</span></h4><p>${escapeHtml(c.price_info.replace('【2026年9月頃の目安】',''))}</p></div>`:''}
+    ${c.price_info?`<div class="msection price"><h4>💰 物価の目安 <span class="price-asof">2026年9月時点</span></h4><ul class="mlist">${splitPriceInfo(c.price_info).map(v=>`<li>${escapeHtml(v)}</li>`).join('')}</ul></div>`:''}
 
     ${infoCells.length?`<div class="infogrid">${infoCells.map(([k,v])=>`<div class="icell"><div class="k">${escapeHtml(k)}</div><div class="v">${escapeHtml(v)}</div></div>`).join('')}</div>`:''}
     ${c.website_url?`<div class="linkrow"><a href="${escapeHtml(c.website_url)}" target="_blank" rel="noopener">関連リンクを見る →</a></div>`:''}

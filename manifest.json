@@ -1,0 +1,11 @@
+{
+  "name": "旅索（タビサク）",
+  "short_name": "タビサク",
+  "description": "国内外の主要都市・空港・旅行系クレジットカードを検索できる旅行情報データベース",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f5f1e8",
+  "theme_color": "#0f766e",
+  "lang": "ja",
+  "icons": []
+}

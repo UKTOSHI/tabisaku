@@ -1,0 +1,310 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>管理画面｜旅索（タビサク）</title>
+<meta name="robots" content="noindex,nofollow">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--teal:#0f766e;--sky:#0284c7;--sand:#f5f1e8;--ink:#1f2937;--sub:#6b7280;--border:#e5e7eb;--ng:#dc2626;--ok:#16a34a;}
+*{box-sizing:border-box;}
+body{margin:0;font-family:-apple-system,'Noto Sans JP',sans-serif;color:var(--ink);background:var(--sand);}
+a{color:inherit;}
+header.site{background:linear-gradient(120deg,var(--teal),var(--sky));color:#fff;padding:16px 20px;}
+.site-inner{max-width:1000px;margin:0 auto;display:flex;justify-content:space-between;align-items:center;}
+.logo{font-size:18px;font-weight:900;}
+#lock{max-width:340px;margin:80px auto;background:#fff;border:1px solid var(--border);border-radius:14px;padding:28px;text-align:center;}
+#lock h2{margin:0 0 16px;font-size:18px;}
+#lock input{width:100%;padding:10px 12px;border:1px solid var(--border);border-radius:8px;font-size:14px;margin-bottom:10px;}
+#lock button{width:100%;padding:10px;border:none;border-radius:8px;background:var(--teal);color:#fff;font-weight:700;cursor:pointer;font-size:14px;}
+.lock-err{font-size:12.5px;color:var(--ng);margin-top:8px;display:none;}
+#main{display:none;max-width:1000px;margin:0 auto;padding:20px 20px 60px;}
+.tabs{display:flex;gap:6px;margin-bottom:20px;border-bottom:1px solid var(--border);flex-wrap:wrap;}
+.tabs button{border:none;background:none;padding:10px 16px;font-size:14px;cursor:pointer;font-family:inherit;color:var(--sub);border-bottom:3px solid transparent;}
+.tabs button.active{color:var(--teal);border-color:var(--teal);font-weight:700;}
+.panel{background:#fff;border:1px solid var(--border);border-radius:12px;padding:20px;margin-bottom:18px;}
+.panel h3{margin:0 0 14px;font-size:15px;}
+table{width:100%;border-collapse:collapse;font-size:13px;}
+th,td{padding:8px 10px;border-bottom:1px solid var(--border);text-align:left;vertical-align:top;}
+th{color:var(--sub);font-weight:500;font-size:12px;}
+td.actions{white-space:nowrap;}
+button.small{border:1px solid var(--border);background:#fff;border-radius:6px;padding:5px 10px;font-size:12px;cursor:pointer;margin-right:4px;}
+button.small.danger{color:var(--ng);border-color:#fca5a5;}
+button.small.primary{background:var(--teal);color:#fff;border-color:var(--teal);}
+.formgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px;margin-bottom:14px;}
+.formgrid .full{grid-column:1/-1;}
+.formgrid label{display:block;font-size:11.5px;color:var(--sub);margin-bottom:4px;}
+.formgrid input, .formgrid textarea, .formgrid select{width:100%;padding:8px 10px;border:1px solid var(--border);border-radius:6px;font-size:13.5px;font-family:inherit;}
+.formgrid textarea{min-height:70px;resize:vertical;}
+.checklist{display:flex;flex-wrap:wrap;gap:10px;}
+.checklist label{display:flex;align-items:center;gap:5px;font-size:12.5px;color:var(--ink);background:var(--sand);padding:5px 10px;border-radius:999px;}
+.checklist input{width:auto;}
+.savebar{display:flex;gap:8px;align-items:center;}
+.msg{font-size:12.5px;color:var(--ok);}
+.new-btn{margin-bottom:12px;}
+</style>
+</head>
+<body>
+
+<header class="site"><div class="site-inner"><div class="logo">旅索 管理画面</div></div></header>
+
+<div id="lock">
+  <h2>管理者ログイン</h2>
+  <input type="password" id="pw" placeholder="パスワード">
+  <button id="loginBtn">ログイン</button>
+  <div class="lock-err" id="lockErr">ログインに失敗しました。</div>
+</div>
+
+<div id="main">
+  <div class="tabs">
+    <button data-tab="city" class="active">都市</button>
+    <button data-tab="airport">空港</button>
+    <button data-tab="credit_card">クレジットカード</button>
+    <button data-tab="tags">タグ管理</button>
+  </div>
+  <div id="tabContent"></div>
+</div>
+
+<script>
+const SUPABASE_URL='https://sunxpjbdvidftukiutxg.supabase.co';
+const SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bnhwamJkdmlkZnR1a2l1dHhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NTU1MDUsImV4cCI6MjA5MDEzMTUwNX0.L9RU4U3kWy4CJzyVR4FEKUrDX8fD2jzWAbQxyaDOIsU';
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
+const ADMIN_EMAIL='admin@rekisaku.com';
+
+function escapeHtml(s){return (s??'').toString().replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+// ---- ログインゲート ----
+document.getElementById('loginBtn').addEventListener('click',login);
+document.getElementById('pw').addEventListener('keydown',e=>{if(e.key==='Enter')login();});
+async function login(){
+  const pw=document.getElementById('pw').value;
+  const {error}=await db.auth.signInWithPassword({email:ADMIN_EMAIL,password:pw});
+  if(error){document.getElementById('lockErr').style.display='block';return;}
+  document.getElementById('lock').style.display='none';
+  document.getElementById('main').style.display='block';
+  initTabs();
+}
+(async()=>{
+  const {data:{session}}=await db.auth.getSession();
+  if(session){document.getElementById('lock').style.display='none';document.getElementById('main').style.display='block';initTabs();}
+})();
+
+// ---- 種別ごとの設定 ----
+const CONFIGS={
+  city:{
+    table:'ts_cities', tagTable:'ts_city_tags', fk:'city_id', contentType:'city', order:'name_kana',
+    listCols:[['name','都市名'],['country','国']],
+    fields:[
+      ['name','都市名',''],['name_kana','ふりがな',''],['name_en','英語表記',''],
+      ['is_domestic','国内(true)/海外(false)',''],['country','国','',''],
+      ['prefecture_id','都道府県ID(国内のみ)',''],
+      ['description','概要','textarea full'],['best_season','ベストシーズン',''],
+      ['timezone','タイムゾーン',''],['currency','通貨',''],['language','言語',''],
+      ['visa_notes','ビザ情報','textarea full'],['access_info','アクセス','textarea full'],
+      ['image_url','画像URL',''],['website_url','関連リンク',''],
+      ['lat','緯度',''],['lng','経度','']
+    ]
+  },
+  airport:{
+    table:'ts_airports', tagTable:'ts_airport_tags', fk:'airport_id', contentType:'airport', order:'name_kana',
+    listCols:[['name','空港名'],['iata_code','IATA']],
+    fields:[
+      ['name','空港名',''],['name_kana','ふりがな',''],['name_en','英語表記',''],
+      ['iata_code','IATAコード',''],['icao_code','ICAOコード',''],
+      ['city_id','都市ID',''],['city_name','都市名(自由入力)',''],
+      ['country','国',''],['prefecture_id','都道府県ID',''],
+      ['terminal_info','ターミナル情報','textarea full'],['access_info','アクセス','textarea full'],
+      ['facilities_info','施設・免税店','textarea full'],['lounge_info','ラウンジ情報','textarea full'],
+      ['description','概要','textarea full'],
+      ['image_url','画像URL',''],['website_url','公式サイト',''],
+      ['lat','緯度',''],['lng','経度','']
+    ]
+  },
+  credit_card:{
+    table:'ts_credit_cards', tagTable:'ts_credit_card_tags', fk:'card_id', contentType:'credit_card', order:'name',
+    listCols:[['name','カード名'],['issuer','発行会社']],
+    fields:[
+      ['name','カード名',''],['issuer','発行会社',''],
+      ['annual_fee','年会費(表記)',''],['annual_fee_yen','年会費(数値・円)',''],
+      ['mile_program','マイルプログラム',''],['partner_airlines','提携航空会社',''],
+      ['mile_earn_rate','マイル還元率',''],['lounge_access','ラウンジ特典','textarea full'],
+      ['travel_insurance','旅行保険','textarea full'],['application_url','申込URL',''],
+      ['image_url','画像URL',''],['description','概要','textarea full']
+    ]
+  }
+};
+
+let state={tab:'city', editId:null, tags:[], tagMapForEdit:new Set()};
+
+function initTabs(){
+  document.querySelectorAll('.tabs button').forEach(btn=>{
+    btn.addEventListener('click',()=>{
+      document.querySelectorAll('.tabs button').forEach(b=>b.classList.remove('active'));
+      btn.classList.add('active');
+      state.tab=btn.dataset.tab;
+      renderTab();
+    });
+  });
+  renderTab();
+}
+
+async function renderTab(){
+  const el=document.getElementById('tabContent');
+  if(state.tab==='tags'){el.innerHTML=tagsTabHtml();bindTagsTab();return;}
+  el.innerHTML='<div class="panel">読み込み中…</div>';
+  const cfg=CONFIGS[state.tab];
+  const [{data:rows},{data:tagRows},{data:linkRows}]=await Promise.all([
+    db.from(cfg.table).select('*').order(cfg.order),
+    db.from('ts_tags').select('*').eq('content_type',cfg.contentType).order('sort_order'),
+    db.from(cfg.tagTable).select('*')
+  ]);
+  state.tags=tagRows||[];
+  const linkMap={};
+  (linkRows||[]).forEach(r=>{(linkMap[r[cfg.fk]]=linkMap[r[cfg.fk]]||[]).push(r.tag_id);});
+  el.innerHTML=`
+    <div class="panel">
+      <button class="small primary new-btn" id="newBtn">＋ 新規追加</button>
+      <table><thead><tr>${cfg.listCols.map(c=>`<th>${c[1]}</th>`).join('')}<th>状態</th><th>操作</th></tr></thead>
+      <tbody>${(rows||[]).map(r=>`
+        <tr>
+          ${cfg.listCols.map(c=>`<td>${escapeHtml(r[c[0]])}</td>`).join('')}
+          <td>${r.status?'公開':'非公開'}</td>
+          <td class="actions">
+            <button class="small" data-edit="${r.id}">編集</button>
+            <button class="small danger" data-del="${r.id}">削除</button>
+          </td>
+        </tr>`).join('')}</tbody></table>
+    </div>
+    <div class="panel" id="formPanel" style="display:none;"></div>
+  `;
+  document.getElementById('newBtn').addEventListener('click',()=>openForm(null,linkMap));
+  el.querySelectorAll('[data-edit]').forEach(b=>b.addEventListener('click',()=>openForm(Number(b.dataset.edit),linkMap,rows)));
+  el.querySelectorAll('[data-del]').forEach(b=>b.addEventListener('click',()=>delRow(Number(b.dataset.del))));
+}
+
+function openForm(id,linkMap,rows){
+  const cfg=CONFIGS[state.tab];
+  state.editId=id;
+  const row=id?rows.find(r=>r.id===id):null;
+  state.tagMapForEdit=new Set(id?(linkMap[id]||[]):[]);
+  const panel=document.getElementById('formPanel');
+  panel.style.display='block';
+  panel.innerHTML=`
+    <h3>${id?'編集':'新規追加'}</h3>
+    <div class="formgrid">
+      ${cfg.fields.map(([key,label,cls])=>`
+        <div class="${(cls||'').includes('full')?'full':''}">
+          <label>${label}</label>
+          ${cls&&cls.includes('textarea')
+            ?`<textarea data-f="${key}">${escapeHtml(row?row[key]:'')}</textarea>`
+            :`<input data-f="${key}" value="${escapeHtml(row?row[key]:'')}">`}
+        </div>
+      `).join('')}
+      <div class="full">
+        <label>状態</label>
+        <select data-f="status"><option value="true" ${!row||row.status?'selected':''}>公開</option><option value="false" ${row&&!row.status?'selected':''}>非公開</option></select>
+      </div>
+    </div>
+    <div class="full" style="margin-bottom:14px;">
+      <label style="font-size:11.5px;color:var(--sub);display:block;margin-bottom:6px;">タグ</label>
+      <div class="checklist">${state.tags.map(t=>`
+        <label><input type="checkbox" value="${t.id}" ${state.tagMapForEdit.has(t.id)?'checked':''}> ${escapeHtml(t.name)}</label>
+      `).join('')}</div>
+    </div>
+    <div class="savebar">
+      <button class="small primary" id="saveBtn">保存</button>
+      <button class="small" id="cancelBtn">キャンセル</button>
+      <span class="msg" id="saveMsg"></span>
+    </div>
+  `;
+  document.getElementById('cancelBtn').addEventListener('click',()=>{panel.style.display='none';});
+  document.getElementById('saveBtn').addEventListener('click',()=>saveRow());
+}
+
+async function saveRow(){
+  const cfg=CONFIGS[state.tab];
+  const panel=document.getElementById('formPanel');
+  const payload={};
+  panel.querySelectorAll('[data-f]').forEach(elm=>{
+    const key=elm.dataset.f;
+    let v=elm.value.trim();
+    if(key==='status'){payload.status=v==='true';return;}
+    if(v===''){payload[key]=null;return;}
+    if(key==='is_domestic'){payload[key]=(v.toLowerCase()==='true');return;}
+    if(['prefecture_id','city_id','annual_fee_yen'].includes(key)){payload[key]=isNaN(Number(v))?null:Number(v);return;}
+    if(['lat','lng'].includes(key)){payload[key]=isNaN(Number(v))?null:Number(v);return;}
+    payload[key]=v;
+  });
+  const selectedTags=new Set([...panel.querySelectorAll('.checklist input:checked')].map(c=>Number(c.value)));
+
+  let rowId=state.editId;
+  if(rowId){
+    const {error}=await db.from(cfg.table).update(payload).eq('id',rowId);
+    if(error){document.getElementById('saveMsg').textContent='エラー: '+error.message;document.getElementById('saveMsg').style.color='var(--ng)';return;}
+  }else{
+    const {data,error}=await db.from(cfg.table).insert(payload).select().single();
+    if(error){document.getElementById('saveMsg').textContent='エラー: '+error.message;document.getElementById('saveMsg').style.color='var(--ng)';return;}
+    rowId=data.id;
+  }
+  await db.from(cfg.tagTable).delete().eq(cfg.fk,rowId);
+  if(selectedTags.size){
+    await db.from(cfg.tagTable).insert([...selectedTags].map(tag_id=>({[cfg.fk]:rowId,tag_id})));
+  }
+  document.getElementById('saveMsg').style.color='var(--ok)';
+  document.getElementById('saveMsg').textContent='保存しました';
+  renderTab();
+}
+
+async function delRow(id){
+  if(!confirm('削除しますか？'))return;
+  const cfg=CONFIGS[state.tab];
+  await db.from(cfg.tagTable).delete().eq(cfg.fk,id);
+  await db.from(cfg.table).delete().eq('id',id);
+  renderTab();
+}
+
+// ---- タグ管理タブ ----
+function tagsTabHtml(){
+  return `
+    <div class="panel">
+      <div class="formgrid">
+        <div><label>種別</label><select id="tagTypeSel">
+          <option value="city">都市</option><option value="airport">空港</option><option value="credit_card">クレジットカード</option>
+        </select></div>
+        <div><label>タグ名</label><input id="newTagName"></div>
+      </div>
+      <button class="small primary" id="addTagBtn">＋ タグ追加</button>
+    </div>
+    <div class="panel"><table id="tagTable"><thead><tr><th>種別</th><th>タグ名</th><th>操作</th></tr></thead><tbody></tbody></table></div>
+  `;
+}
+async function bindTagsTab(){
+  document.getElementById('addTagBtn').addEventListener('click',async()=>{
+    const content_type=document.getElementById('tagTypeSel').value;
+    const name=document.getElementById('newTagName').value.trim();
+    if(!name)return;
+    await db.from('ts_tags').insert({content_type,name});
+    document.getElementById('newTagName').value='';
+    loadTagList();
+  });
+  loadTagList();
+}
+async function loadTagList(){
+  const {data}=await db.from('ts_tags').select('*').order('content_type').order('sort_order');
+  const labelMap={city:'都市',airport:'空港',credit_card:'クレジットカード'};
+  document.querySelector('#tagTable tbody').innerHTML=(data||[]).map(t=>`
+    <tr><td>${labelMap[t.content_type]||t.content_type}</td><td>${escapeHtml(t.name)}</td>
+    <td><button class="small danger" data-tagdel="${t.id}">削除</button></td></tr>
+  `).join('');
+  document.querySelectorAll('[data-tagdel]').forEach(b=>b.addEventListener('click',async()=>{
+    if(!confirm('このタグを削除しますか？（関連付けも削除されます）'))return;
+    const id=Number(b.dataset.tagdel);
+    await Promise.all(['ts_city_tags','ts_airport_tags','ts_credit_card_tags'].map(t=>db.from(t).delete().eq('tag_id',id)));
+    await db.from('ts_tags').delete().eq('id',id);
+    loadTagList();
+  }));
+}
+</script>
+</body>
+</html>

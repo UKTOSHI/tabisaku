@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>空港を探す｜旅索（タビサク）</title>
+<meta name="description" content="成田・羽田をはじめとする主要空港を検索。ターミナル情報、アクセス、免税店・ラウンジ情報をまとめて確認できます。">
+<link rel="canonical" href="https://tabisaku.vercel.app/airports.html">
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#0f766e">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--teal:#0f766e;--sky:#0284c7;--sand:#f5f1e8;--ink:#1f2937;--sub:#6b7280;--border:#e5e7eb;--card-bg:#ffffff;}
+*{box-sizing:border-box;}
+body{margin:0;font-family:'Noto Sans JP',sans-serif;color:var(--ink);background:var(--sand);}
+a{color:inherit;text-decoration:none;}
+header.site{background:linear-gradient(120deg,var(--teal),var(--sky));color:#fff;padding:16px 20px;position:sticky;top:0;z-index:10;box-shadow:0 2px 8px rgba(0,0,0,.08);}
+.site-inner{max-width:1080px;margin:0 auto;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:10px;}
+.logo{font-size:20px;font-weight:900;}
+nav.site a{margin-left:16px;font-weight:500;font-size:14px;opacity:.95;}
+nav.site a.active{text-decoration:underline;}
+main{max-width:1080px;margin:0 auto;padding:24px 20px 56px;}
+h1{font-size:24px;margin:0 0 4px;}
+.lead{color:var(--sub);font-size:13.5px;margin:0 0 20px;}
+.panel{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:18px 20px;margin-bottom:20px;}
+.row{display:flex;flex-wrap:wrap;gap:12px;align-items:center;margin-bottom:12px;}
+.row:last-child{margin-bottom:0;}
+input[type=text], select{border:1px solid var(--border);border-radius:8px;padding:9px 12px;font-size:14px;font-family:inherit;}
+input[type=text]{flex:1;min-width:200px;}
+select{min-width:160px;}
+.tags{display:flex;flex-wrap:wrap;gap:8px;}
+.tag-chip{border:1px solid var(--border);border-radius:999px;padding:6px 14px;font-size:12.5px;cursor:pointer;background:#fff;user-select:none;}
+.tag-chip.active{background:var(--teal);color:#fff;border-color:var(--teal);}
+.count{font-size:13px;color:var(--sub);margin-bottom:12px;}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:16px;}
+.item{background:var(--card-bg);border:1px solid var(--border);border-radius:14px;padding:18px;cursor:pointer;transition:box-shadow .15s, transform .15s;}
+.item:hover{box-shadow:0 8px 20px rgba(15,118,110,.15);transform:translateY(-2px);}
+.item .badge{display:inline-block;font-size:11px;background:var(--sky);color:#fff;border-radius:999px;padding:2px 10px;margin-bottom:8px;}
+.item .code{float:right;font-size:11px;background:var(--sand);border-radius:6px;padding:2px 8px;font-weight:700;color:var(--teal);}
+.item h3{margin:0 0 6px;font-size:17px;}
+.item p{margin:0;font-size:12.5px;color:var(--sub);line-height:1.6;}
+.empty{color:var(--sub);font-size:13.5px;padding:40px 0;text-align:center;}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center;padding:20px;}
+.modal-bg.open{display:flex;}
+.modal{background:#fff;border-radius:16px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;padding:28px;position:relative;}
+.modal .close{position:absolute;top:14px;right:16px;border:none;background:none;font-size:20px;cursor:pointer;color:var(--sub);}
+.modal h2{margin:0 0 4px;font-size:22px;}
+.modal .sub{color:var(--sub);font-size:13px;margin-bottom:16px;}
+.modal dl{margin:0;}
+.modal dt{font-size:11.5px;color:var(--sub);margin-top:12px;}
+.modal dd{margin:2px 0 0;font-size:14px;line-height:1.7;}
+.modal .mtags{margin-top:14px;display:flex;flex-wrap:wrap;gap:6px;}
+.modal .mtags span{background:var(--sand);border-radius:999px;padding:4px 12px;font-size:12px;}
+</style>
+</head>
+<body>
+
+<header class="site">
+  <div class="site-inner">
+    <div class="logo"><a href="index.html" style="color:#fff;">旅索</a></div>
+    <nav class="site">
+      <a href="cities.html">都市</a>
+      <a href="airports.html" class="active">空港</a>
+      <a href="cards.html">クレジットカード</a>
+      <a href="admin.html">管理</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <h1>空港を探す</h1>
+  <p class="lead">成田・羽田をはじめとする主要空港のターミナル情報、アクセス、免税店・ラウンジ情報を検索できます。</p>
+
+  <div class="panel">
+    <div class="row">
+      <input type="text" id="q" placeholder="空港名・IATAコードで検索（例：成田、NRT）">
+      <select id="countrySelect"><option value="">国・地域を選択</option></select>
+    </div>
+    <div class="row">
+      <div class="tags" id="tagFilters"></div>
+    </div>
+  </div>
+
+  <div class="count" id="count"></div>
+  <div class="grid" id="grid"><div class="empty">読み込み中…</div></div>
+</main>
+
+<div class="modal-bg" id="modalBg">
+  <div class="modal">
+    <button class="close" id="modalClose">✕</button>
+    <div id="modalBody"></div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL='https://sunxpjbdvidftukiutxg.supabase.co';
+const SUPABASE_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InN1bnhwamJkdmlkZnR1a2l1dHhnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQ1NTU1MDUsImV4cCI6MjA5MDEzMTUwNX0.L9RU4U3kWy4CJzyVR4FEKUrDX8fD2jzWAbQxyaDOIsU';
+const db=supabase.createClient(SUPABASE_URL,SUPABASE_ANON);
+
+let airports=[], tags=[], airportTagMap={};
+let state={q:'',country:'',tagIds:new Set()};
+
+function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+
+async function load(){
+  const [{data:airportRows},{data:tagRows},{data:atRows}]=await Promise.all([
+    db.from('ts_airports').select('*, ts_prefectures(name)').eq('status',true).order('name_kana'),
+    db.from('ts_tags').select('*').eq('content_type','airport').order('sort_order'),
+    db.from('ts_airport_tags').select('airport_id, tag_id')
+  ]);
+  airports=airportRows||[];
+  tags=tagRows||[];
+  airportTagMap={};
+  (atRows||[]).forEach(r=>{(airportTagMap[r.airport_id]=airportTagMap[r.airport_id]||[]).push(r.tag_id);});
+
+  const countries=[...new Set(airports.map(a=>a.country))].sort();
+  document.getElementById('countrySelect').innerHTML='<option value="">国・地域を選択</option>'+
+    countries.map(c=>`<option value="${escapeHtml(c)}">${escapeHtml(c)}</option>`).join('');
+
+  document.getElementById('tagFilters').innerHTML=tags.map(t=>
+    `<div class="tag-chip" data-id="${t.id}">${escapeHtml(t.name)}</div>`
+  ).join('');
+  document.querySelectorAll('.tag-chip').forEach(el=>{
+    el.addEventListener('click',()=>{
+      const id=Number(el.dataset.id);
+      if(state.tagIds.has(id)){state.tagIds.delete(id);el.classList.remove('active');}
+      else{state.tagIds.add(id);el.classList.add('active');}
+      render();
+    });
+  });
+
+  render();
+}
+
+function render(){
+  const q=state.q.trim().toLowerCase();
+  let list=airports.filter(a=>{
+    if(state.country&&a.country!==state.country)return false;
+    if(q&&![a.name,a.name_kana,a.name_en,a.iata_code].some(v=>(v||'').toLowerCase().includes(q)))return false;
+    if(state.tagIds.size){
+      const t=airportTagMap[a.id]||[];
+      if(![...state.tagIds].every(id=>t.includes(id)))return false;
+    }
+    return true;
+  });
+
+  document.getElementById('count').textContent=`${list.length}件の空港`;
+  const grid=document.getElementById('grid');
+  if(!list.length){grid.innerHTML='<div class="empty">条件に一致する空港が見つかりませんでした。</div>';return;}
+  grid.innerHTML=list.map(a=>`
+    <div class="item" data-id="${a.id}">
+      ${a.iata_code?`<span class="code">${escapeHtml(a.iata_code)}</span>`:''}
+      <span class="badge">${escapeHtml(a.ts_prefectures?a.ts_prefectures.name:a.country)}</span>
+      <h3>${escapeHtml(a.name)}</h3>
+      <p>${escapeHtml((a.access_info||'').slice(0,50))}${(a.access_info||'').length>50?'…':''}</p>
+    </div>
+  `).join('');
+  grid.querySelectorAll('.item').forEach(el=>{
+    el.addEventListener('click',()=>openModal(Number(el.dataset.id)));
+  });
+}
+
+function openModal(id){
+  const a=airports.find(x=>x.id===id);
+  if(!a)return;
+  const t=(airportTagMap[a.id]||[]).map(tid=>tags.find(x=>x.id===tid)).filter(Boolean);
+  document.getElementById('modalBody').innerHTML=`
+    <h2>${escapeHtml(a.name)}${a.iata_code?` <span style="font-size:14px;color:var(--sub);">(${escapeHtml(a.iata_code)})</span>`:''}</h2>
+    <div class="sub">${escapeHtml(a.ts_prefectures?a.ts_prefectures.name+'・'+a.country:a.country)}</div>
+    <dl>
+      ${a.description?`<dt>概要</dt><dd>${escapeHtml(a.description)}</dd>`:''}
+      ${a.terminal_info?`<dt>ターミナル情報</dt><dd>${escapeHtml(a.terminal_info)}</dd>`:''}
+      ${a.access_info?`<dt>アクセス</dt><dd>${escapeHtml(a.access_info)}</dd>`:''}
+      ${a.facilities_info?`<dt>施設・免税店</dt><dd>${escapeHtml(a.facilities_info)}</dd>`:''}
+      ${a.lounge_info?`<dt>ラウンジ情報</dt><dd>${escapeHtml(a.lounge_info)}</dd>`:''}
+      ${a.website_url?`<dt>公式サイト</dt><dd><a href="${escapeHtml(a.website_url)}" target="_blank" rel="noopener">${escapeHtml(a.website_url)}</a></dd>`:''}
+    </dl>
+    ${t.length?`<div class="mtags">${t.map(x=>`<span>${escapeHtml(x.name)}</span>`).join('')}</div>`:''}
+  `;
+  document.getElementById('modalBg').classList.add('open');
+}
+
+document.getElementById('modalClose').addEventListener('click',()=>document.getElementById('modalBg').classList.remove('open'));
+document.getElementById('modalBg').addEventListener('click',e=>{if(e.target.id==='modalBg')e.currentTarget.classList.remove('open');});
+
+document.getElementById('q').addEventListener('input',e=>{state.q=e.target.value;render();});
+document.getElementById('countrySelect').addEventListener('change',e=>{state.country=e.target.value;render();});
+
+load();
+</script>
+</body>
+</html>

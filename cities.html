@@ -76,6 +76,7 @@ input[type=text]{flex:1;min-width:200px;}
 .msection ruby{ruby-position:over;}
 .msection rt{font-size:10px;color:var(--sub);font-weight:500;user-select:none;}
 .price-asof{display:inline-block;font-size:10.5px;font-weight:700;background:#2563eb;color:#fff;border-radius:999px;padding:3px 10px;}
+.exchange-note{margin:0 0 12px;font-size:12.5px;color:var(--sub);}
 .ptable{display:grid;grid-template-columns:auto minmax(0,1fr) minmax(0,1fr);column-gap:8px;width:100%;}
 .ptable .prow{display:contents;}
 .ptable .prow>div{padding:9px 0;font-size:13.5px;border-top:1px solid rgba(0,0,0,.08);align-self:center;}
@@ -320,7 +321,9 @@ function openModal(id){
 
     ${c.spots_info?`<div class="msection spots"><h4>📍 観光スポット</h4><ul class="mlist">${splitSpotsInfo(c.spots_info).map(v=>`<li>${v}</li>`).join('')}</ul></div>`:''}
     ${c.food_info?`<div class="msection food"><h4>🍴 おすすめグルメ</h4><p>${escapeHtml(c.food_info)}</p></div>`:''}
-    ${c.price_hotel_jpy||c.price_meal_jpy||c.price_transport_jpy?`<div class="msection price"><h4>💰 物価の目安 <span class="price-asof">2026年9月時点</span></h4><div class="ptable">
+    ${c.price_hotel_jpy||c.price_meal_jpy||c.price_transport_jpy?`<div class="msection price"><h4>💰 物価の目安 <span class="price-asof">2026年9月時点</span></h4>
+    ${c.exchange_rate_note?`<p class="exchange-note">💱 為替の目安：${escapeHtml(c.exchange_rate_note)}</p>`:''}
+    <div class="ptable">
       ${c.price_hotel_jpy?`<div class="prow"><div class="plabel">ホテル1泊</div><div class="pval-jpy${c.price_hotel_local?'':' full'}">${escapeHtml(c.price_hotel_jpy)}</div>${c.price_hotel_local?`<div class="pval-local">${escapeHtml(c.price_hotel_local)}</div>`:''}</div>`:''}
       ${c.price_meal_jpy?`<div class="prow"><div class="plabel">食事1食</div><div class="pval-jpy${c.price_meal_local?'':' full'}">${escapeHtml(c.price_meal_jpy)}</div>${c.price_meal_local?`<div class="pval-local">${escapeHtml(c.price_meal_local)}</div>`:''}</div>`:''}
       ${c.price_transport_jpy?`<div class="prow"><div class="plabel">${escapeHtml(c.price_transport_label||'交通')}</div><div class="pval-jpy${c.price_transport_local?'':' full'}">${escapeHtml(c.price_transport_jpy)}</div>${c.price_transport_local?`<div class="pval-local">${escapeHtml(c.price_transport_local)}</div>`:''}</div>`:''}

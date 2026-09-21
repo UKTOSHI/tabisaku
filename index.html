@@ -84,6 +84,7 @@ section.finder{max-width:1080px;margin:0 auto;padding:0 20px 40px;}
 .finder-title{font-size:16px;font-weight:700;margin:0 0 16px;}
 .finder-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;}
 .finder-grid.start{grid-template-columns:repeat(auto-fit,minmax(220px,1fr));}
+.finder-grid.countries-view{display:block;}
 .finder-btn{display:block;width:100%;text-align:left;background:var(--sand);border:1px solid var(--border);border-radius:12px;padding:16px 16px;font-family:inherit;font-size:14.5px;font-weight:700;color:var(--ink);cursor:pointer;transition:background .15s, transform .15s;}
 .finder-btn:hover{background:#fff;border-color:var(--teal);transform:translateY(-2px);}
 .finder-btn .sub{display:block;font-weight:500;font-size:12px;color:var(--sub);margin-top:4px;}
@@ -93,6 +94,13 @@ section.finder{max-width:1080px;margin:0 auto;padding:0 20px 40px;}
 .finder-empty{color:var(--sub);font-size:13.5px;padding:20px 0;}
 .finder-footer-link{margin-top:18px;font-size:13px;}
 .finder-footer-link a{color:var(--teal);font-weight:700;}
+.country-block{margin-bottom:20px;}
+.country-block:last-child{margin-bottom:0;}
+.country-head{display:flex;align-items:baseline;gap:8px;margin-bottom:10px;}
+.country-head .country-name{font-size:14.5px;font-weight:700;color:var(--ink);}
+.country-head .sub{font-size:12px;color:var(--sub);}
+.country-head .country-all-link{margin-left:auto;font-size:12px;color:var(--teal);font-weight:700;white-space:nowrap;}
+.city-pills{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
 </style>
 </head>
 <body>
@@ -174,7 +182,7 @@ function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&
 
 const REGION_ORDER=['北米','南米','アジア','ヨーロッパ'];
 let finderRegions=[]; // [{region, countries:[{country, cities:[{id,name}]}]}]
-let finderState={step:'root', region:null, country:null};
+let finderState={step:'root', region:null};
 
 async function initFinder(){
   const {data,error}=await db.from('ts_cities').select('id,name,country,region').eq('status',true).eq('is_domestic',false).order('id');
@@ -198,8 +206,8 @@ async function initFinder(){
   renderFinder();
 }
 
-function finderGo(step,region,country){
-  finderState={step,region,country};
+function finderGo(step,region){
+  finderState={step,region};
   renderFinder();
 }
 
@@ -210,8 +218,7 @@ function renderFinder(){
   const footer=document.getElementById('finderFooterLink');
 
   const crumbParts=[`<button type="button" data-step="root">どこへ行きますか？</button>`];
-  if(finderState.region)crumbParts.push(`<span class="sep">›</span><button type="button" data-step="region" data-region="${escapeHtml(finderState.region)}">${escapeHtml(finderState.region)}</button>`);
-  if(finderState.country)crumbParts.push(`<span class="sep">›</span><span>${escapeHtml(finderState.country)}</span>`);
+  if(finderState.region)crumbParts.push(`<span class="sep">›</span><span>${escapeHtml(finderState.region)}</span>`);
   crumbs.innerHTML=finderState.step==='root'?'':crumbParts.join('');
 
   if(finderState.step==='root'){
@@ -229,45 +236,42 @@ function renderFinder(){
     else{
       grid.innerHTML=finderRegions.map(r=>{
         const cityCount=r.countries.reduce((n,c)=>n+c.cities.length,0);
-        return `<button type="button" class="finder-btn" data-step="country" data-region="${escapeHtml(r.region)}">${escapeHtml(r.region)}<span class="sub">${r.countries.length}カ国・${cityCount}都市</span></button>`;
+        return `<button type="button" class="finder-btn" data-step="countries" data-region="${escapeHtml(r.region)}">${escapeHtml(r.region)}<span class="sub">${r.countries.length}カ国・${cityCount}都市</span></button>`;
       }).join('');
     }
     footer.innerHTML='<a href="cities.html?domestic=0">海外の都市をすべて見る →</a>';
-  }else if(finderState.step==='country'){
+  }else if(finderState.step==='countries'){
     const r=finderRegions.find(x=>x.region===finderState.region);
-    title.textContent=`${finderState.region}の国を選んでください`;
-    grid.className='finder-grid';
-    if(!r||!r.countries.length){grid.innerHTML='<div class="finder-empty">現在表示できる国がありません。</div>';}
+    title.textContent=`${finderState.region}の都市を選んでください`;
+    grid.className='finder-grid countries-view';
+    if(!r||!r.countries.length){grid.innerHTML='<div class="finder-empty">現在表示できる都市がありません。</div>';}
     else{
-      grid.innerHTML=r.countries.map(c=>
-        `<button type="button" class="finder-btn" data-step="city" data-region="${escapeHtml(finderState.region)}" data-country="${escapeHtml(c.country)}">${escapeHtml(c.country)}<span class="sub">${c.cities.length}都市</span></button>`
-      ).join('');
+      grid.innerHTML=r.countries.map(c=>`
+        <div class="country-block">
+          <div class="country-head">
+            <span class="country-name">${escapeHtml(c.country)}</span>
+            <span class="sub">${c.cities.length}都市</span>
+            <a class="country-all-link" href="cities.html?country=${encodeURIComponent(c.country)}">すべて見る →</a>
+          </div>
+          <div class="city-pills">
+            ${c.cities.map(city=>`<a class="finder-btn city-btn" href="cities.html?q=${encodeURIComponent(city.name)}">${escapeHtml(city.name)}</a>`).join('')}
+          </div>
+        </div>
+      `).join('');
     }
     footer.innerHTML='';
-  }else if(finderState.step==='city'){
-    const r=finderRegions.find(x=>x.region===finderState.region);
-    const c=r&&r.countries.find(x=>x.country===finderState.country);
-    title.textContent=`${finderState.country}の都市を選んでください`;
-    grid.className='finder-grid';
-    if(!c||!c.cities.length){grid.innerHTML='<div class="finder-empty">現在表示できる都市がありません。</div>';}
-    else{
-      grid.innerHTML=c.cities.map(city=>
-        `<a class="finder-btn city-btn" href="cities.html?q=${encodeURIComponent(city.name)}">${escapeHtml(city.name)}</a>`
-      ).join('');
-    }
-    footer.innerHTML=`<a href="cities.html?country=${encodeURIComponent(finderState.country)}">${escapeHtml(finderState.country)}の都市をすべて見る →</a>`;
   }
 }
 
 document.getElementById('finderCrumbs').addEventListener('click',e=>{
   const btn=e.target.closest('button[data-step]');
   if(!btn)return;
-  finderGo(btn.dataset.step,btn.dataset.region||null,null);
+  finderGo(btn.dataset.step,btn.dataset.region||null);
 });
 document.getElementById('finderGrid').addEventListener('click',e=>{
   const btn=e.target.closest('button[data-step]');
   if(!btn)return;
-  finderGo(btn.dataset.step,btn.dataset.region||null,btn.dataset.country||null);
+  finderGo(btn.dataset.step,btn.dataset.region||null);
 });
 
 initFinder();

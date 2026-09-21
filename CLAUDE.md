@@ -28,7 +28,7 @@
 
 - `ts_prefectures` — 都道府県マスタ（旅索専用）
 - `ts_tags` — タグマスタ（`content_type`: `city` / `airport` / `credit_card`）
-- `ts_cities`（`region`列：海外都市のみ`北米`/`南米`/`アジア`/`ヨーロッパ`を設定、国内はnull／`food_info`・`spots_info`列：おすすめグルメ・観光スポットのテキスト（`spots_info`は①②③④の連番形式、読みにくい漢字地名は`<ruby>`タグでルビ付き・cities.html側はエスケープせず生HTMLとして描画）／`price_hotel_jpy`・`price_hotel_local`・`price_meal_jpy`・`price_meal_local`・`price_transport_label`・`price_transport_jpy`・`price_transport_local`列：物価を円・現地通貨それぞれ別列に分けた構造化フィールド（cities.html側はCSS Gridの3列表で「項目名｜円（右揃え太字）｜現地通貨（右揃え）」の位置を縦に揃えて表示、"2026年9月頃の目安"として提示。旧`price_hotel`/`price_meal`/`price_transport_value`/`price_info`列は未使用のままDBに残存）／`exchange_rate_note`列：物価セクション冒頭に表示する為替の目安テキスト（例：「1米ドル ≈ 150円（2026年9月頃の目安）」、既存の円/現地通貨価格と整合する固定レートで通貨ごとに算出）／`tip_info`列：チップ文化の目安（国単位でほぼ同一内容、都市ごとに複製）／`flight_time_from_tokyo`・`time_diff`列：東京からのフライト時間・日本との時差（海外都市のみ、国内はnull）／`popularity_rating`・`affordability_rating`・`safety_rating`列：日本人からの人気度・物価の安さ・治安の良さを1〜5のsmallintで評価し、cities.html側は★☆で表示（いずれも実測データではなくAIによる目安・CHECK制約1〜5のみでadmin側バリデーションはなし）。いずれもadmin画面のフォームに項目あり／`lat`・`lng`列：緯度・経度（2026-09-21に全63都市分をAIの一般知識ベースで投入、実測・API取得ではない概算値。TOP画面の地図UIで使用）） / `ts_city_tags`
+- `ts_cities`（`app_info`・`payment_info`列：現地で必須のアプリ（配車アプリ等）・決済事情（クレカ普及度・現地通貨の要否）のテキスト（2026-09-22に追加、国単位でほぼ同一内容を全63都市に投入。ヴェネツィア・モンサンミッシェル・バンフは「配車アプリが使えない／限定的」という個別事情をapp_infoに反映）／`region`列：海外都市のみ`北米`/`南米`/`アジア`/`ヨーロッパ`を設定、国内はnull／`food_info`・`spots_info`列：おすすめグルメ・観光スポットのテキスト（`spots_info`は①②③④の連番形式、読みにくい漢字地名は`<ruby>`タグでルビ付き・cities.html側はエスケープせず生HTMLとして描画）／`price_hotel_jpy`・`price_hotel_local`・`price_meal_jpy`・`price_meal_local`・`price_transport_label`・`price_transport_jpy`・`price_transport_local`列：物価を円・現地通貨それぞれ別列に分けた構造化フィールド（cities.html側はCSS Gridの3列表で「項目名｜円（右揃え太字）｜現地通貨（右揃え）」の位置を縦に揃えて表示、"2026年9月頃の目安"として提示。旧`price_hotel`/`price_meal`/`price_transport_value`/`price_info`列は未使用のままDBに残存）／`exchange_rate_note`列：物価セクション冒頭に表示する為替の目安テキスト（例：「1米ドル ≈ 150円（2026年9月頃の目安）」、既存の円/現地通貨価格と整合する固定レートで通貨ごとに算出）／`tip_info`列：チップ文化の目安（国単位でほぼ同一内容、都市ごとに複製）／`flight_time_from_tokyo`・`time_diff`列：東京からのフライト時間・日本との時差（海外都市のみ、国内はnull）／`popularity_rating`・`affordability_rating`・`safety_rating`列：日本人からの人気度・物価の安さ・治安の良さを1〜5のsmallintで評価し、cities.html側は★☆で表示（いずれも実測データではなくAIによる目安・CHECK制約1〜5のみでadmin側バリデーションはなし）。いずれもadmin画面のフォームに項目あり／`lat`・`lng`列：緯度・経度（2026-09-21に全63都市分をAIの一般知識ベースで投入、実測・API取得ではない概算値。TOP画面の地図UIで使用）） / `ts_city_tags`
 - `ts_airports` / `ts_airport_tags`
 - `ts_credit_cards` / `ts_credit_card_tags`
 
@@ -47,6 +47,18 @@
 git -C "C:\Users\toshi\projects\tabisaku" worktree remove .claude/worktrees/tabisaku-a89c17
 git -C "C:\Users\toshi\projects\tabisaku" branch -D claude/tabisaku-a89c17
 ```
+**さらに2026-09-22時点で追加保留**: 今回のセッション自身が使用中のworktree`urban-info-rideshare-payment-f31204`（ブランチ`claude/urban-info-rideshare-payment-f31204`）も、自分自身の中からは削除できないため未削除。上記`tabisaku-a89c17`と合わせて、次回メインリポジトリ直下から両方まとめて片付けるとよい：
+```
+git -C "C:\Users\toshi\projects\tabisaku" worktree remove .claude/worktrees/urban-info-rideshare-payment-f31204
+git -C "C:\Users\toshi\projects\tabisaku" branch -D claude/urban-info-rideshare-payment-f31204
+```
+
+- ✅ **都市情報に「現地で必須のアプリ」「決済事情」を追加（完了・main反映済み 2026-09-22・コミット`a97ce45`）**: ユーザー依頼「都市情報でアプリ　配車アプリなど現地でほぼ必須のもの／決済　クレカまたは現地通貨などの情報も」に対応
+  - DBの更新（カラム追加・全都市データ投入）を伴うため、事前にAskUserQuestionでユーザーに方針確認してから着手
+  - `ts_cities`に`app_info`（現地で必須のアプリ）・`payment_info`（決済事情）の2列を追加し、全63都市分をAIの一般知識ベースで投入（実測データではない目安）。基本は国単位でほぼ同一内容（例：タイ・ベトナム・マレーシア→配車アプリ「Grab」、中国→Alipay/WeChat Payがほぼ必須級、韓国→ナビは「Naver Map」推奨、日本→GO/Suica等）で全都市に複製しつつ、ヴェネツィア・モンサンミッシェル・バンフの3都市のみ「車の乗り入れ不可／配車アプリ対応エリア外」という個別事情をapp_infoに反映
+  - `cities.html`のモーダル「📋実用情報」セクションに📱現地で必須のアプリ・💳決済事情を追加表示、`admin-x8k2qz.html`のフォームにも同2項目のtextareaを追加（既存のvisa_notes/access_infoと同じ設定駆動パターンを踏襲）
+  - **動作確認**: ローカル`npx serve`でヴェネツィアの詳細モーダルを開き、新項目の描画と個別事情の反映をスクリーンショットで確認（コンソールエラーなし）。admin画面はSupabase Authのパスワードを入力しての実ログイン確認は行わず、設定駆動のフィールド定義が既存項目と同一パターンであることの確認に留めた
+  - コミット後、このセッション自身のworktree内から`git push origin HEAD:main`で直接main反映（このプロジェクトの標準運用を踏襲）
 
 - ✅ **Google Search Console登録／SEO強化／TOP画面に地図UI追加（完了・main反映済み 2026-09-21・コミット`edc4f89`〜`3604d0f`）**: ユーザー依頼「URLをGoogle Search Consoleに登録して」「タビサクでSEOを上位にするようにして、国内旅行、海外旅行なども」「都市を選ぶときに地図から選ぶようにできますか」に対応
   - **GSC登録**: `https://tabisaku.vercel.app/`をURLプレフィックスプロパティとして追加。ドメインプロパティ（DNS認証）はVercel既定ドメインでDNS操作ができないため非採用、HTMLタグ方式で所有権確認。`sitemap.xml`（index/cities/airports/cards）も送信済み
@@ -69,6 +81,16 @@ git -C "C:\Users\toshi\projects\tabisaku" branch -D claude/tabisaku-a89c17
 ---
 
 ## 📝 セッションログ
+
+### 2026-09-22（都市情報に「現地で必須のアプリ」「決済事情」を追加）✅main反映済み・コード変更あり・DB変更あり・⚠️worktree未削除（新規、上記参照）（コミット`a97ce45`）
+- ユーザー依頼「都市情報で　アプリ　配車アプリなど現地でほぼ必須のもの　決済　クレカまたは現地通貨などの情報も」に対応
+- 既存のtip_info等と同様DBの更新を伴うため、着手前にAskUserQuestionで「ts_citiesにapp_info/payment_infoの2列を追加し、全63都市分をAIの一般知識ベースで投入してからcities.html・admin画面に反映する」方針を提示し承認を得てから実施
+- **DB変更**: `ts_cities`に`app_info`（現地で必須のアプリ）・`payment_info`（決済情報）の2列（text）を追加。全63都市の`country`列でグルーピングしたUPDATE文で国単位の内容を一括投入（タイ／ベトナム／マレーシア→「Grab」、中国→Alipay/WeChat Pay必須級・DiDiは外国人に高ハードル、韓国→Kakao T必須級・Naver Map推奨、香港→Octopus、欧米→Uber/Lyft中心などをapp_info・payment_infoにそれぞれ記載）。個別上書きとしてヴェネツィア（id36：旧市街は車・バイク乗り入れ不可、ヴァポレット中心）、モンサンミッシェル（id58：島内徒歩のみ、シャトル要予約）、バンフ（id65：国立公園内は配車アプリ対応エリア外）のapp_infoを個別記述に差し替え
+- **`cities.html`**: 詳細モーダルの「📋実用情報」情報グループに📱現地で必須のアプリ・💳決済事情の2項目を追加（既存のビザ情報・アクセスと同じicellレイアウトで表示）
+- **`admin-x8k2qz.html`**: 都市フォームのfields配列にapp_info・payment_infoのtextarea項目を追加（既存フィールドと同じconfig駆動の仕組みにそのまま追加できたためJS側の他ロジック変更は不要）
+- **動作確認**: `.claude/launch.json`の`tabisaku-static`（`npx serve`）をローカル起動し、cities.htmlで63件の都市が表示されること、ヴェネツィアの詳細モーダルで新項目が表示され個別事情（車乗り入れ不可）が反映されていることをスクリーンショットで確認。admin画面は新フィールドがフォームの他項目と同じパターンで描画される設定であることを確認したのみで、Supabase Authへの実ログイン（パスワード入力）は行っていない
+- **Git運用**: このセッションはworktree`urban-info-rideshare-payment-f31204`（ブランチ`claude/urban-info-rideshare-payment-f31204`）として開始。ローカルでコミット後、直近のセッションと同じ運用でブランチを作らず`git push origin HEAD:main`によりmainへ直接push。worktree自体はセッション内から削除できず、既存の`tabisaku-a89c17`と合わせて次回片付けが必要（上記「🚧現在の作業」参照）
+- **次の宿題**: ①配車アプリの規制・普及状況（特に中国のDiDiや各国の配車サービス事情）は変化が速い分野のため、他の目安値（物価・チップ等）以上に鮮度が落ちやすい点に注意②内容は国単位でほぼ同一のため、同じ国の都市間での細かな違い（例：地方都市では配車アプリの対応エリアが狭い等）までは反映できていない
 
 ### 2026-09-21・さらに追加セッション（Google Search Console登録／SEO強化／TOP画面に地図UI追加）✅main反映済み・コード変更あり・DB変更あり・⚠️worktree未削除（保留、上記参照）（コミット`edc4f89`〜`3604d0f`）
 - ユーザー依頼「URLをGoogle Search Consoleに登録して」に対応。Chrome拡張（ユーザーの実Chrome、既存のGoogleログインセッションを利用）でGSCを操作し、`https://tabisaku.vercel.app/`をURLプレフィックスプロパティとして追加。ドメインプロパティ（DNS認証）はVercelの既定ドメインでDNS操作ができないため非採用と判断し、URLプレフィックス＋HTMLタグ方式を選択

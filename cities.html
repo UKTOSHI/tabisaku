@@ -41,7 +41,9 @@ input[type=text]{flex:1;min-width:200px;}
 .item:hover{box-shadow:0 8px 20px rgba(15,118,110,.15);transform:translateY(-2px);}
 .item .badge{display:inline-block;font-size:11px;background:var(--sky);color:#fff;border-radius:999px;padding:2px 10px;margin-bottom:8px;}
 .item h3{margin:0 0 6px;font-size:17px;}
-.item p{margin:0;font-size:12.5px;color:var(--sub);line-height:1.6;}
+.item p{margin:0 0 10px;font-size:12.5px;color:var(--sub);line-height:1.6;}
+.ratings-mini{display:flex;flex-wrap:wrap;gap:10px;font-size:11px;color:var(--sub);border-top:1px solid var(--border);padding-top:9px;}
+.ratings-mini .stars{color:#d97706;letter-spacing:1px;}
 .empty{color:var(--sub);font-size:13.5px;padding:40px 0;text-align:center;}
 .modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:100;align-items:center;justify-content:center;padding:0;}
 .modal-bg.open{display:flex;}
@@ -63,6 +65,11 @@ input[type=text]{flex:1;min-width:200px;}
 .msection.food h4{color:#c2410c;}
 .msection.price{background:#eff6ff;border-left:5px solid #2563eb;}
 .msection.price h4{color:#1d4ed8;}
+.msection.ratings{background:#fffbeb;border-left:5px solid #d97706;}
+.msection.ratings h4{color:#b45309;}
+.ratings-table{display:grid;grid-template-columns:auto 1fr;column-gap:14px;row-gap:8px;align-items:center;}
+.ratings-table .rlabel{font-size:13.5px;color:var(--sub);white-space:nowrap;}
+.ratings-table .rstars{font-size:17px;color:#d97706;letter-spacing:2px;}
 .msection ul.mlist{margin:0;padding:0;list-style:none;}
 .msection ul.mlist li{padding:8px 0;font-size:14px;line-height:1.7;border-top:1px solid rgba(0,0,0,.07);}
 .msection ul.mlist li:first-child{border-top:none;padding-top:0;}
@@ -152,6 +159,7 @@ let cities=[], tags=[], cityTagMap={}, prefs=[];
 let state={q:'',domestic:'all',pref:'',country:'',tagIds:new Set()};
 
 function escapeHtml(s){return (s||'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function renderStars(n){n=Number(n)||0;return '★'.repeat(n)+'☆'.repeat(Math.max(0,5-n));}
 
 async function load(){
   const [{data:cityRows},{data:tagRows},{data:ctRows},{data:prefRows}]=await Promise.all([
@@ -265,6 +273,11 @@ function render(){
       <span class="badge reg-${c.is_domestic?'domestic':escapeHtml(c.region||'')}">${c.is_domestic?(c.ts_prefectures?c.ts_prefectures.name:'国内'):c.country}</span>
       <h3>${escapeHtml(c.name)}</h3>
       <p>${escapeHtml((c.description||'').slice(0,50))}${(c.description||'').length>50?'…':''}</p>
+      ${c.popularity_rating||c.affordability_rating||c.safety_rating?`<div class="ratings-mini">
+        <span>人気 <span class="stars">${renderStars(c.popularity_rating)}</span></span>
+        <span>物価 <span class="stars">${renderStars(c.affordability_rating)}</span></span>
+        <span>治安 <span class="stars">${renderStars(c.safety_rating)}</span></span>
+      </div>`:''}
     </div>
   `).join('');
   grid.querySelectorAll('.item').forEach(el=>{
@@ -298,6 +311,12 @@ function openModal(id){
     <h2>${escapeHtml(c.name)}</h2>
     <div class="sub">${escapeHtml(c.is_domestic?(c.ts_prefectures?c.ts_prefectures.name+'・日本':'日本'):c.country)}</div>
     ${c.description?`<p class="overview">${escapeHtml(c.description)}</p>`:''}
+
+    ${c.popularity_rating||c.affordability_rating||c.safety_rating?`<div class="msection ratings"><h4>⭐ 評価の目安</h4><div class="ratings-table">
+      ${c.popularity_rating?`<div class="rlabel">日本人からの人気</div><div class="rstars">${renderStars(c.popularity_rating)}</div>`:''}
+      ${c.affordability_rating?`<div class="rlabel">物価の安さ</div><div class="rstars">${renderStars(c.affordability_rating)}</div>`:''}
+      ${c.safety_rating?`<div class="rlabel">治安の良さ</div><div class="rstars">${renderStars(c.safety_rating)}</div>`:''}
+    </div></div>`:''}
 
     ${c.spots_info?`<div class="msection spots"><h4>📍 観光スポット</h4><ul class="mlist">${splitSpotsInfo(c.spots_info).map(v=>`<li>${v}</li>`).join('')}</ul></div>`:''}
     ${c.food_info?`<div class="msection food"><h4>🍴 おすすめグルメ</h4><p>${escapeHtml(c.food_info)}</p></div>`:''}

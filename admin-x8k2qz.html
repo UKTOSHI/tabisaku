@@ -113,6 +113,9 @@ const CONFIGS={
       ['tip_info','チップ文化（例：基本的に不要／会計の15〜20%が目安 など）','textarea full'],
       ['flight_time_from_tokyo','東京からのフライト時間(海外のみ)',''],
       ['time_diff','日本との時差(海外のみ)',''],
+      ['popularity_rating','人気度（日本人観光客からの人気、1〜5の数値）',''],
+      ['affordability_rating','物価の安さ（コスパ、1〜5の数値。5が最も安い）',''],
+      ['safety_rating','治安の良さ（1〜5の数値。5が最も安全）',''],
       ['best_season','ベストシーズン',''],
       ['timezone','タイムゾーン',''],['currency','通貨',''],['language','言語',''],
       ['visa_notes','ビザ情報','textarea full'],['access_info','アクセス','textarea full'],
@@ -246,7 +249,7 @@ async function saveRow(){
     if(key==='status'){payload.status=v==='true';return;}
     if(v===''){payload[key]=null;return;}
     if(key==='is_domestic'){payload[key]=(v.toLowerCase()==='true');return;}
-    if(['prefecture_id','city_id','annual_fee_yen'].includes(key)){payload[key]=isNaN(Number(v))?null:Number(v);return;}
+    if(['prefecture_id','city_id','annual_fee_yen','popularity_rating','affordability_rating','safety_rating'].includes(key)){payload[key]=isNaN(Number(v))?null:Number(v);return;}
     if(['lat','lng'].includes(key)){payload[key]=isNaN(Number(v))?null:Number(v);return;}
     payload[key]=v;
   });

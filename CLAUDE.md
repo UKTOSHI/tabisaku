@@ -26,7 +26,7 @@
 
 - `ts_prefectures` — 都道府県マスタ（旅索専用）
 - `ts_tags` — タグマスタ（`content_type`: `city` / `airport` / `credit_card`）
-- `ts_cities`（`region`列：海外都市のみ`北米`/`南米`/`アジア`/`ヨーロッパ`を設定、国内はnull／`food_info`・`spots_info`列：おすすめグルメ・観光スポットのテキスト（`spots_info`は①②③④の連番形式、読みにくい漢字地名は`<ruby>`タグでルビ付き・cities.html側はエスケープせず生HTMLとして描画）／`price_hotel_jpy`・`price_hotel_local`・`price_meal_jpy`・`price_meal_local`・`price_transport_label`・`price_transport_jpy`・`price_transport_local`列：物価を円・現地通貨それぞれ別列に分けた構造化フィールド（cities.html側はCSS Gridの3列表で「項目名｜円（右揃え太字）｜現地通貨（右揃え）」の位置を縦に揃えて表示、"2026年9月頃の目安"として提示。旧`price_hotel`/`price_meal`/`price_transport_value`/`price_info`列は未使用のままDBに残存）／`tip_info`列：チップ文化の目安（国単位でほぼ同一内容、都市ごとに複製）／`flight_time_from_tokyo`・`time_diff`列：東京からのフライト時間・日本との時差（海外都市のみ、国内はnull）。いずれもadmin画面のフォームに項目あり） / `ts_city_tags`
+- `ts_cities`（`region`列：海外都市のみ`北米`/`南米`/`アジア`/`ヨーロッパ`を設定、国内はnull／`food_info`・`spots_info`列：おすすめグルメ・観光スポットのテキスト（`spots_info`は①②③④の連番形式、読みにくい漢字地名は`<ruby>`タグでルビ付き・cities.html側はエスケープせず生HTMLとして描画）／`price_hotel_jpy`・`price_hotel_local`・`price_meal_jpy`・`price_meal_local`・`price_transport_label`・`price_transport_jpy`・`price_transport_local`列：物価を円・現地通貨それぞれ別列に分けた構造化フィールド（cities.html側はCSS Gridの3列表で「項目名｜円（右揃え太字）｜現地通貨（右揃え）」の位置を縦に揃えて表示、"2026年9月頃の目安"として提示。旧`price_hotel`/`price_meal`/`price_transport_value`/`price_info`列は未使用のままDBに残存）／`exchange_rate_note`列：物価セクション冒頭に表示する為替の目安テキスト（例：「1米ドル ≈ 150円（2026年9月頃の目安）」、既存の円/現地通貨価格と整合する固定レートで通貨ごとに算出）／`tip_info`列：チップ文化の目安（国単位でほぼ同一内容、都市ごとに複製）／`flight_time_from_tokyo`・`time_diff`列：東京からのフライト時間・日本との時差（海外都市のみ、国内はnull）／`popularity_rating`・`affordability_rating`・`safety_rating`列：日本人からの人気度・物価の安さ・治安の良さを1〜5のsmallintで評価し、cities.html側は★☆で表示（いずれも実測データではなくAIによる目安・CHECK制約1〜5のみでadmin側バリデーションはなし）。いずれもadmin画面のフォームに項目あり） / `ts_city_tags`
 - `ts_airports` / `ts_airport_tags`
 - `ts_credit_cards` / `ts_credit_card_tags`
 
@@ -40,7 +40,7 @@
 
 ## 🚧 現在の作業
 
-**⚠️保留事項（2026-09-21・追加セッション）**: このセッションは`.claude/worktrees/add-malaysia-vietnam-indonesia-ba3413`というworktree内で作業しており、作業内容（下記参照）は既にコミット`5508dd8`としてmainにfast-forward pushし反映済み（ローカルmain・origin/main一致）。ただしworktreeフォルダとブランチ`claude/add-malaysia-vietnam-indonesia-ba3413`自体は、セッションの中から自分自身を削除することができないため未削除のまま残っている。**次回セッションで、メインリポジトリ直下（worktreeの外）で以下を実行して片付けが必要**：
+**⚠️保留事項（2026-09-21・追加セッション、2026-09-21終了時点）**: このセッションは`.claude/worktrees/add-malaysia-vietnam-indonesia-ba3413`というworktree内で作業しており、作業内容（下記セッションログ参照）はすべてコミット済み・mainにfast-forward pushして反映済み（最終コミット`1e64c91`、ローカルmain・origin/main一致）。ただしworktreeフォルダとブランチ`claude/add-malaysia-vietnam-indonesia-ba3413`自体は、セッションの中から自分自身を削除することができないため未削除のまま残っている。**次回セッションで、メインリポジトリ直下（worktreeの外）で以下を実行して片付けが必要**：
 ```
 git worktree remove .claude/worktrees/add-malaysia-vietnam-indonesia-ba3413
 git branch -D claude/add-malaysia-vietnam-indonesia-ba3413
@@ -60,13 +60,15 @@ git branch -D claude/add-malaysia-vietnam-indonesia-ba3413
 
 ## 📝 セッションログ
 
-### 2026-09-21・追加セッション（TOP画面の国→都市選択を1ステップに統合／マレーシア・ベトナム・インドネシア追加）✅main反映済み・コード変更あり・DB変更あり・⚠️worktree未削除（保留、上記参照）（コミット`5508dd8`）
+### 2026-09-21・追加セッション（TOP画面の国→都市選択を1ステップに統合／マレーシア・ベトナム・インドネシア追加／都市の★評価3項目追加／為替の目安表示追加）✅main反映済み・コード変更あり・DB変更あり・⚠️worktree未削除（保留、上記参照）（コミット`5508dd8`〜`1e64c91`）
 - ユーザー依頼「マレーシア、ベトナム、インドネシアを追加」＋フィードバック「国名選んだのに、その次に都市がすぐにでてこない。もっと簡単にできるでしょ」「無駄なアクションないか階層を見直して」に対応
 - **UX調査**: AskUserQuestionで確認したところ、対象はTOP画面（`index.html`）の階層検索（海外旅行→エリア→国→都市の4ステップ）。実機検証では技術的な遅延バグはなく、「国」を選ぶステップがクリックしても新しい選択肢が一段増えるだけで実際のコンテンツ（都市）に辿り着かない、という無駄な1クリックが原因と判断
 - **`index.html`修正**: 階層検索から「国」ステップを廃止し、エリア選択後は国ごとに都市を見出し＋ピル形式で並べて即座に選べる1画面構成に統合（`海外旅行→エリア→都市`の3ステップに短縮）。国名は見出し表示のみ（クリック不要）、各国見出し横に「すべて見る→」リンク（`cities.html?country=`）を維持
 - **DB変更**: `ts_cities`にアジア地域の新規3カ国・6都市を追加（マレーシア：クアラルンプール・ペナン／ベトナム：ホーチミン・ハノイ／インドネシア：バリ島・ジャカルタ）。他のアジア都市と同じ全項目（説明・ベストシーズン・通貨・言語・ビザ情報・アクセス・フライト時間・時差・物価円/現地通貨・チップ・グルメ・観光スポット）を作成。計63都市に拡充
 - **動作確認**: ローカル静的サーバーでTOP画面のエリア→都市の遷移短縮、都市詳細モーダル（クアラルンプール等）の表示、cities.htmlの国プルダウンへの反映を確認。コンソールエラーなし
 - **Git運用**: このセッションはアプリのworktree機能により`claude/add-malaysia-vietnam-indonesia-ba3413`ブランチのworktreeとして開始されていたため、ユーザーに確認の上、ローカルでコミット後`git push origin HEAD:main`でmainへfast-forward push。リモートに同名ブランチは存在しなかったため削除は不要だったが、worktree自体はセッション内から削除できず保留（上記「🚧現在の作業」参照）
+- **都市の★評価3項目を追加（ユーザー依頼「都市の観光で日本人の人気とか物価とか治安とか★5つ満点でつけて」）**: `ts_cities`に`popularity_rating`（人気度）/`affordability_rating`（物価の安さ、5が最も安い）/`safety_rating`（治安の良さ、5が最も安全）の3列（smallint、CHECK 1〜5）を追加。全63都市に一般的な知識に基づくAI目安値を投入（⚠️実測・統計データではない）。`cities.html`の一覧カード下部に3項目のミニ★表示、詳細モーダルにも「⭐評価の目安」セクションを新設。admin画面のフォームにも1〜5の数値入力欄を追加し、保存時にNumber変換する対象キーにも追加
+- **為替の目安を物価セクションの直前に追加（ユーザー依頼「物価の前に通貨が日本円でいくらか入れて」）**: `ts_cities`に`exchange_rate_note`列（text）を追加。既存の`price_hotel_jpy`/`price_hotel_local`等から通貨ごとに逆算した固定レート（例：USD≈150円、EUR≈163円、KRW=100ウォン≈11円、VND=1,000ドン≈9.2円など）で全62海外都市に「1〇〇 ≈ ◯円（2026年9月頃の目安）」の形式で投入し、既存の価格表記と矛盾しないよう整合性を確認。`cities.html`の「💰物価の目安」見出し直下・価格テーブルより前に表示。adminフォームにも物価関連項目の先頭に入力欄を追加
 
 ### 2026-09-21（TOP画面の階層検索新設／都市データの大幅拡充・全面改修／モーダルUI改善8回／管理画面URL非公開化）✅main反映済み・コード変更あり・DB変更あり（詳細は本日分の各項目を参照、最終コミット`a8254d4`）
 - ユーザー依頼「TOP画面の検索はまず、国内旅行、海外旅行から入る。海外旅行の場合は北米、南米、アジア、ヨーロッパのようにして、そのあと主要国、都市を選べるように。まずメジャーな国と都市（日本人がよく行くところ）を入れていく」に対応

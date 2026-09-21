@@ -44,6 +44,8 @@
 </script>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;500;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css">
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <style>
 :root{
@@ -111,6 +113,16 @@ section.finder{max-width:1080px;margin:0 auto;padding:0 20px 40px;}
 .country-head .sub{font-size:12px;color:var(--sub);}
 .country-head .country-all-link{margin-left:auto;font-size:12px;color:var(--teal);font-weight:700;white-space:nowrap;}
 .city-pills{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px;}
+
+.finder-tabs{display:flex;gap:8px;margin-bottom:16px;}
+.finder-tabs button{border:1px solid var(--border);background:var(--sand);color:var(--sub);border-radius:999px;padding:8px 18px;font-family:inherit;font-size:13.5px;font-weight:700;cursor:pointer;}
+.finder-tabs button.active{background:var(--teal);border-color:var(--teal);color:#fff;}
+#finderMapWrap{display:none;}
+#finderMapWrap.active{display:block;}
+#finderMap{width:100%;height:420px;border-radius:12px;border:1px solid var(--border);background:#e5e7eb;}
+.map-hint{font-size:12px;color:var(--sub);margin:10px 0 0;}
+.map-pin-label{background:var(--teal);color:#fff;font-weight:700;font-size:11.5px;padding:2px 8px;border-radius:999px;white-space:nowrap;border:2px solid #fff;box-shadow:0 1px 4px rgba(0,0,0,.25);}
+.map-pin-label.domestic{background:#dc2626;}
 </style>
 </head>
 <body>
@@ -133,13 +145,24 @@ section.finder{max-width:1080px;margin:0 auto;padding:0 20px 40px;}
 
 <section class="finder">
   <div class="finder-panel">
-    <div class="finder-crumbs" id="finderCrumbs"></div>
-    <p class="finder-title" id="finderTitle">どこへ行きますか？</p>
-    <div class="finder-grid start" id="finderGrid">
-      <a class="finder-btn start-btn" href="cities.html?domestic=1"><span class="emoji">🗾</span>国内旅行<span class="sub">日本国内の都市を探す</span></a>
-      <button type="button" class="finder-btn start-btn" data-step="region"><span class="emoji">🌍</span>海外旅行<span class="sub">エリアから都市を探す</span></button>
+    <div class="finder-tabs">
+      <button type="button" id="tabListBtn" class="active">📋 リストで選ぶ</button>
+      <button type="button" id="tabMapBtn">🗺️ 地図で選ぶ</button>
     </div>
-    <p class="finder-footer-link" id="finderFooterLink"></p>
+    <div id="finderListWrap">
+      <div class="finder-crumbs" id="finderCrumbs"></div>
+      <p class="finder-title" id="finderTitle">どこへ行きますか？</p>
+      <div class="finder-grid start" id="finderGrid">
+        <a class="finder-btn start-btn" href="cities.html?domestic=1"><span class="emoji">🗾</span>国内旅行<span class="sub">日本国内の都市を探す</span></a>
+        <button type="button" class="finder-btn start-btn" data-step="region"><span class="emoji">🌍</span>海外旅行<span class="sub">エリアから都市を探す</span></button>
+      </div>
+      <p class="finder-footer-link" id="finderFooterLink"></p>
+    </div>
+    <div id="finderMapWrap">
+      <p class="finder-title">地図上のピンをクリックすると都市の詳細が開きます</p>
+      <div id="finderMap"></div>
+      <p class="map-hint">📍 国内旅行の都市は赤、海外旅行の都市は緑のピンで表示しています。</p>
+    </div>
   </div>
 </section>
 
@@ -288,6 +311,49 @@ document.getElementById('finderGrid').addEventListener('click',e=>{
 });
 
 initFinder();
+
+// ---- 地図で都市を選ぶ ----
+let mapInstance=null;
+let mapLoaded=false;
+
+document.getElementById('tabListBtn').addEventListener('click',()=>switchFinderTab('list'));
+document.getElementById('tabMapBtn').addEventListener('click',()=>switchFinderTab('map'));
+
+function switchFinderTab(tab){
+  document.getElementById('tabListBtn').classList.toggle('active',tab==='list');
+  document.getElementById('tabMapBtn').classList.toggle('active',tab==='map');
+  document.getElementById('finderListWrap').style.display=tab==='list'?'block':'none';
+  document.getElementById('finderMapWrap').classList.toggle('active',tab==='map');
+  if(tab==='map'){
+    if(!mapLoaded){mapLoaded=true;initFinderMap();}
+    else if(mapInstance){setTimeout(()=>mapInstance.invalidateSize(),0);}
+  }
+}
+
+async function initFinderMap(){
+  mapInstance=L.map('finderMap',{scrollWheelZoom:false}).setView([20,20],2);
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',{
+    attribution:'&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom:18
+  }).addTo(mapInstance);
+
+  const {data,error}=await db.from('ts_cities').select('name,country,is_domestic,lat,lng').eq('status',true).not('lat','is',null).not('lng','is',null);
+  if(error||!data||!data.length){
+    document.querySelector('.map-hint').textContent='現在、地図に表示できる都市がありません。';
+    setTimeout(()=>mapInstance.invalidateSize(),0);
+    return;
+  }
+  data.forEach(c=>{
+    const icon=L.divIcon({
+      className:'',
+      html:`<span class="map-pin-label${c.is_domestic?' domestic':''}">${escapeHtml(c.name)}</span>`,
+      iconAnchor:[0,0]
+    });
+    const marker=L.marker([c.lat,c.lng],{icon}).addTo(mapInstance);
+    marker.on('click',()=>{location.href=`cities.html?q=${encodeURIComponent(c.name)}`;});
+  });
+  setTimeout(()=>mapInstance.invalidateSize(),0);
+}
 </script>
 </body>
 </html>

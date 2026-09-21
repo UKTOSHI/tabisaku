@@ -324,7 +324,9 @@ function openModal(id){
       ['💴','通貨',c.currency],
       ['🗣️','言語',c.language],
       ['📋','ビザ情報',c.visa_notes],
-      ['🚗','アクセス',c.access_info]
+      ['🚗','アクセス',c.access_info],
+      ['📱','現地で必須のアプリ',c.app_info],
+      ['💳','決済事情',c.payment_info]
     ]]
   ].map(([title,items])=>[title,items.filter(([,,v])=>v)]).filter(([,items])=>items.length);
   document.getElementById('modalBody').innerHTML=`

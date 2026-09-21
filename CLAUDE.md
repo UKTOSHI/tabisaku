@@ -42,15 +42,11 @@
 
 ## 🚧 現在の作業
 
-**⚠️保留事項（2026-09-21時点・未対応）**: `git worktree list`で確認したところ、以下のworktreeが未削除のまま残っている（いずれもアプリのworktree機能でセッションが開始され、作業内容はコミット・mainへpush済みだが、セッション自身からは自分のworktreeを削除できないため残存）。**次回セッションで、メインリポジトリ直下（`C:\Users\toshi\projects\tabisaku`、worktreeの外）で以下を実行して片付けが必要**：
+**⚠️保留事項（2026-09-21時点・一部対応済み）**: 同日中に`add-malaysia-vietnam-indonesia-ba3413`と`top-search-hierarchy-49e9a1`の2つのworktreeは、このセッション自身から絶対パス指定（`git worktree remove "C:\Users\toshi\projects\tabisaku\.claude\worktrees\..."`）で削除済み（cdはせず、現在の`tabisaku-a89c17`ワークツリーの中から実行）。残る`tabisaku-a89c17`（このセッション自身が使用中のworktree）だけは、自分自身の中からは削除できないため未削除。**次回、メインリポジトリ直下またはこのworktree以外の場所で以下を実行して片付けが必要**：
 ```
-git worktree remove .claude/worktrees/add-malaysia-vietnam-indonesia-ba3413
-git branch -D claude/add-malaysia-vietnam-indonesia-ba3413
-git worktree remove .claude/worktrees/tabisaku-a89c17
-git branch -D claude/tabisaku-a89c17
-git worktree remove .claude/worktrees/top-search-hierarchy-49e9a1
+git -C "C:\Users\toshi\projects\tabisaku" worktree remove .claude/worktrees/tabisaku-a89c17
+git -C "C:\Users\toshi\projects\tabisaku" branch -D claude/tabisaku-a89c17
 ```
-（`top-search-hierarchy-49e9a1`は元のブランチ自体は削除済みでworktreeがdetached HEAD状態のまま残存。ブランチ削除コマンドは不要）
 
 - ✅ **Google Search Console登録／SEO強化／TOP画面に地図UI追加（完了・main反映済み 2026-09-21・コミット`edc4f89`〜`3604d0f`）**: ユーザー依頼「URLをGoogle Search Consoleに登録して」「タビサクでSEOを上位にするようにして、国内旅行、海外旅行なども」「都市を選ぶときに地図から選ぶようにできますか」に対応
   - **GSC登録**: `https://tabisaku.vercel.app/`をURLプレフィックスプロパティとして追加。ドメインプロパティ（DNS認証）はVercel既定ドメインでDNS操作ができないため非採用、HTMLタグ方式で所有権確認。`sitemap.xml`（index/cities/airports/cards）も送信済み

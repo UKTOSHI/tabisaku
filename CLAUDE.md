@@ -9,6 +9,8 @@
 - デプロイ: Vercel（`vercel.json`はキャッシュ無効化ヘッダーのみ、ビルド設定なし）
 - 本番URL: https://tabisaku.vercel.app
 - GitHub: https://github.com/UKTOSHI/tabisaku
+- Google Search Console: 2026-09-21にURLプレフィックスプロパティ`https://tabisaku.vercel.app/`を登録・所有権確認済み（HTMLタグ方式、`index.html`の`<head>`に`google-site-verification`メタタグを設置）。GSCアカウントはユーザー本人のGoogleアカウント（toshihide.ukimi@gmail.com）
+- 地図UI: TOP画面（`index.html`）の都市選択に、Leaflet + OpenStreetMapタイル（CDN経由、APIキー不要）を使用
 
 ## ページ構成
 
@@ -26,7 +28,7 @@
 
 - `ts_prefectures` — 都道府県マスタ（旅索専用）
 - `ts_tags` — タグマスタ（`content_type`: `city` / `airport` / `credit_card`）
-- `ts_cities`（`region`列：海外都市のみ`北米`/`南米`/`アジア`/`ヨーロッパ`を設定、国内はnull／`food_info`・`spots_info`列：おすすめグルメ・観光スポットのテキスト（`spots_info`は①②③④の連番形式、読みにくい漢字地名は`<ruby>`タグでルビ付き・cities.html側はエスケープせず生HTMLとして描画）／`price_hotel_jpy`・`price_hotel_local`・`price_meal_jpy`・`price_meal_local`・`price_transport_label`・`price_transport_jpy`・`price_transport_local`列：物価を円・現地通貨それぞれ別列に分けた構造化フィールド（cities.html側はCSS Gridの3列表で「項目名｜円（右揃え太字）｜現地通貨（右揃え）」の位置を縦に揃えて表示、"2026年9月頃の目安"として提示。旧`price_hotel`/`price_meal`/`price_transport_value`/`price_info`列は未使用のままDBに残存）／`exchange_rate_note`列：物価セクション冒頭に表示する為替の目安テキスト（例：「1米ドル ≈ 150円（2026年9月頃の目安）」、既存の円/現地通貨価格と整合する固定レートで通貨ごとに算出）／`tip_info`列：チップ文化の目安（国単位でほぼ同一内容、都市ごとに複製）／`flight_time_from_tokyo`・`time_diff`列：東京からのフライト時間・日本との時差（海外都市のみ、国内はnull）／`popularity_rating`・`affordability_rating`・`safety_rating`列：日本人からの人気度・物価の安さ・治安の良さを1〜5のsmallintで評価し、cities.html側は★☆で表示（いずれも実測データではなくAIによる目安・CHECK制約1〜5のみでadmin側バリデーションはなし）。いずれもadmin画面のフォームに項目あり） / `ts_city_tags`
+- `ts_cities`（`region`列：海外都市のみ`北米`/`南米`/`アジア`/`ヨーロッパ`を設定、国内はnull／`food_info`・`spots_info`列：おすすめグルメ・観光スポットのテキスト（`spots_info`は①②③④の連番形式、読みにくい漢字地名は`<ruby>`タグでルビ付き・cities.html側はエスケープせず生HTMLとして描画）／`price_hotel_jpy`・`price_hotel_local`・`price_meal_jpy`・`price_meal_local`・`price_transport_label`・`price_transport_jpy`・`price_transport_local`列：物価を円・現地通貨それぞれ別列に分けた構造化フィールド（cities.html側はCSS Gridの3列表で「項目名｜円（右揃え太字）｜現地通貨（右揃え）」の位置を縦に揃えて表示、"2026年9月頃の目安"として提示。旧`price_hotel`/`price_meal`/`price_transport_value`/`price_info`列は未使用のままDBに残存）／`exchange_rate_note`列：物価セクション冒頭に表示する為替の目安テキスト（例：「1米ドル ≈ 150円（2026年9月頃の目安）」、既存の円/現地通貨価格と整合する固定レートで通貨ごとに算出）／`tip_info`列：チップ文化の目安（国単位でほぼ同一内容、都市ごとに複製）／`flight_time_from_tokyo`・`time_diff`列：東京からのフライト時間・日本との時差（海外都市のみ、国内はnull）／`popularity_rating`・`affordability_rating`・`safety_rating`列：日本人からの人気度・物価の安さ・治安の良さを1〜5のsmallintで評価し、cities.html側は★☆で表示（いずれも実測データではなくAIによる目安・CHECK制約1〜5のみでadmin側バリデーションはなし）。いずれもadmin画面のフォームに項目あり／`lat`・`lng`列：緯度・経度（2026-09-21に全63都市分をAIの一般知識ベースで投入、実測・API取得ではない概算値。TOP画面の地図UIで使用）） / `ts_city_tags`
 - `ts_airports` / `ts_airport_tags`
 - `ts_credit_cards` / `ts_credit_card_tags`
 
@@ -40,11 +42,23 @@
 
 ## 🚧 現在の作業
 
-**⚠️保留事項（2026-09-21・追加セッション、2026-09-21終了時点）**: このセッションは`.claude/worktrees/add-malaysia-vietnam-indonesia-ba3413`というworktree内で作業しており、作業内容（下記セッションログ参照）はすべてコミット済み・mainにfast-forward pushして反映済み（最終コミット`1e64c91`、ローカルmain・origin/main一致）。ただしworktreeフォルダとブランチ`claude/add-malaysia-vietnam-indonesia-ba3413`自体は、セッションの中から自分自身を削除することができないため未削除のまま残っている。**次回セッションで、メインリポジトリ直下（worktreeの外）で以下を実行して片付けが必要**：
+**⚠️保留事項（2026-09-21時点・未対応）**: `git worktree list`で確認したところ、以下のworktreeが未削除のまま残っている（いずれもアプリのworktree機能でセッションが開始され、作業内容はコミット・mainへpush済みだが、セッション自身からは自分のworktreeを削除できないため残存）。**次回セッションで、メインリポジトリ直下（`C:\Users\toshi\projects\tabisaku`、worktreeの外）で以下を実行して片付けが必要**：
 ```
 git worktree remove .claude/worktrees/add-malaysia-vietnam-indonesia-ba3413
 git branch -D claude/add-malaysia-vietnam-indonesia-ba3413
+git worktree remove .claude/worktrees/tabisaku-a89c17
+git branch -D claude/tabisaku-a89c17
+git worktree remove .claude/worktrees/top-search-hierarchy-49e9a1
 ```
+（`top-search-hierarchy-49e9a1`は元のブランチ自体は削除済みでworktreeがdetached HEAD状態のまま残存。ブランチ削除コマンドは不要）
+
+- ✅ **Google Search Console登録／SEO強化／TOP画面に地図UI追加（完了・main反映済み 2026-09-21・コミット`edc4f89`〜`3604d0f`）**: ユーザー依頼「URLをGoogle Search Consoleに登録して」「タビサクでSEOを上位にするようにして、国内旅行、海外旅行なども」「都市を選ぶときに地図から選ぶようにできますか」に対応
+  - **GSC登録**: `https://tabisaku.vercel.app/`をURLプレフィックスプロパティとして追加。ドメインプロパティ（DNS認証）はVercel既定ドメインでDNS操作ができないため非採用、HTMLタグ方式で所有権確認。`sitemap.xml`（index/cities/airports/cards）も送信済み
+  - **SEO改善**: 全4ページのタイトル・メタディスクリプション・見出しに「国内旅行」「海外旅行」を追加、OGP・Twitterカード・構造化データ（BreadcrumbList等）を`cities.html`/`airports.html`/`cards.html`にも追加（従来`index.html`のみ）。TOP画面の階層検索UIをJS実行前でもクロールできる静的HTML（サーバー側で最初から埋め込み）に変更。サイトマップに`lastmod`/`changefreq`を追加。⚠️「国内旅行」「海外旅行」単体は大手旅行サイトが独占する激戦キーワードのため、これだけでの上位表示は現実的でない旨をユーザーに説明済み
+  - **地図UI**: `ts_cities`の`lat`/`lng`列（既にadmin画面フォームには存在したが63都市とも未入力だった）にAIの一般知識ベースで全63都市分の座標を投入。TOP画面に「リストで選ぶ／地図で選ぶ」タブを新設し、地図タブではLeaflet+OpenStreetMap（無料・APIキー不要）で世界地図を表示、ピンクリックで該当都市の`cities.html?q=`検索結果に遷移。国内旅行都市は赤ピン、海外旅行都市は緑ピンで区別
+  - **ヘッダー修正（ユーザー依頼「ヘッダーにTABISAKUではなくタビサクの文字をいれて」）**: `index.html`ヘッダーロゴの副題表記を「TABISAKU」から「タビサク」に変更
+  - **動作確認**: ローカル`npx serve`とClaude in Chrome（ユーザーの実Chrome、Supabase等への通信がプレビューブラウザ側の拡張機能でブロックされたため使用）の両方で、デスクトップ・モバイル幅の地図タブ動作、cities.htmlへの遷移、SEOタグ反映を確認。本番Vercel環境でも地図UI・GSC所有権確認済みを確認
+  - **次の宿題**: ①GSCで今回追加した4ページの「URL検査→インデックス登録をリクエスト」は未実施（希望があれば対応可能）②地図のピンはワールドマップ全体表示時に都市が密集するエリア（ヨーロッパ・アジア等）でラベルが重なる。ズームすれば解消するが、初期表示のクラスタリング（マーカークラスタ化）は今後の改善余地あり
 
 **2026-09-21のセッションはすべてmain反映済み・クリーンな状態で終了（最終コミット`a8254d4`、ローカルmain・origin/mainとも一致）。この日1日でTOP画面の階層検索新設・都市データの大幅拡充（27→56都市＋国数絞り込み）・都市詳細モーダルのデザイン改善を8回以上のユーザーフィードバックを受けて反復・管理画面URL非公開化、まで実施。ワークフローが変更になり、この日から「ブランチを作らず直接mainにpush」が標準運用（ユーザー指示「修正はメインにこれからやって」「ブランチとかつくらないでよい」）。旧ブランチ`claude/top-search-hierarchy-49e9a1`はmainにfast-forwardマージ後、ローカル・リモートとも削除済み。コード変更あり（`index.html`/`cities.html`/`admin-x8k2qz.html`/`robots.txt`/`README.md`）・DB変更あり（`ts_cities`に`region`/`food_info`/`spots_info`/`flight_time_from_tokyo`/`time_diff`/`price_hotel_jpy`/`price_hotel_local`/`price_meal_jpy`/`price_meal_local`/`price_transport_label`/`price_transport_jpy`/`price_transport_local`/`tip_info`列を追加、国内1+海外56の計57都市に拡充。旧`price_info`/`price_hotel`/`price_meal`/`price_transport_value`列は使われなくなったが非破壊的にDBへ残存）。次の宿題：①admin画面の`region`欄はフリーテキストのため、国名との対応が手打ち任せ（バリデーションなし）②物価・チップ・フライト時間・時差はいずれも実測やAPI取得ではなくAIによる目安値なので、時期が経つほど実態とズレる可能性がある（現地通貨換算も固定レートによる概算）③ルビ付きの`spots_info`は生HTMLとして描画しているため、admin画面で編集する管理者は`<ruby>`タグの書き方を知っている必要がある（バリデーションや入力補助なし）④物価まわりのカラムが7列に増え、admin管理フォームの入力項目がかなり多くなっている（将来的にUIをグルーピングするなどの整理を検討してもよい）。**
 
@@ -59,6 +73,18 @@ git branch -D claude/add-malaysia-vietnam-indonesia-ba3413
 ---
 
 ## 📝 セッションログ
+
+### 2026-09-21・さらに追加セッション（Google Search Console登録／SEO強化／TOP画面に地図UI追加）✅main反映済み・コード変更あり・DB変更あり・⚠️worktree未削除（保留、上記参照）（コミット`edc4f89`〜`3604d0f`）
+- ユーザー依頼「URLをGoogle Search Consoleに登録して」に対応。Chrome拡張（ユーザーの実Chrome、既存のGoogleログインセッションを利用）でGSCを操作し、`https://tabisaku.vercel.app/`をURLプレフィックスプロパティとして追加。ドメインプロパティ（DNS認証）はVercelの既定ドメインでDNS操作ができないため非採用と判断し、URLプレフィックス＋HTMLタグ方式を選択
+- 取得したverificationメタタグを`index.html`の`<head>`に追加してmainへpush・Vercel再デプロイを確認後、GSC側で「所有権を証明しました」を確認。続けて`sitemap.xml`（index/cities/airports/cards）をGSCに送信（送信直後は「取得できませんでした」と表示されたが、sitemap.xml自体の内容は正常なため一時的な表示と判断）
+- 続けてユーザー依頼「タビサクでSEOを上位にするようにして、国内旅行、海外旅行なども」に対応。「国内旅行」「海外旅行」単体は大手旅行サイトが独占する激戦キーワードのため、これだけでの上位表示は現実的でない旨を先に説明した上で、技術的なSEO改善を実施：①全4ページのタイトル・メタディスクリプション・見出しに「国内旅行」「海外旅行」を自然な形で追加②`cities.html`/`airports.html`/`cards.html`にOGP・Twitterカード・構造化データ（BreadcrumbList）を追加（従来`index.html`のみに存在）③TOP画面の階層検索UI（「国内旅行」「海外旅行」ボタン等）がJS実行後（Supabaseフェッチ完了後）にしかDOMに現れない構造だったため、初期HTMLに直接埋め込むよう修正しクロール効率を改善④`sitemap.xml`に`lastmod`/`changefreq`を追加⑤フッターに「国内旅行」「海外旅行」への内部リンクを追加
+- ユーザーからの割り込み指示「ヘッダーにTABISAKUではなくタビサクの文字をいれて」に対応し、`index.html`ヘッダーの副題表記を「TABISAKU」→「タビサク」に変更
+- ローカル`npx serve`で4ページとも動作確認（コンソールエラーなし）後、mainへpush。本番Vercelでもtitleタグ・メタタグの反映を確認
+- 続けてユーザー依頼「都市を選ぶときに地図から選ぶようにできますか」に対応。AskUserQuestionで「TOP画面に追加」「Leaflet+無料地図タイル」を選択（Google Mapsは要APIキー・課金可能性ありのため非採用）
+- **DB調査**: `ts_cities`の管理画面フォームには既に`lat`/`lng`項目が存在していたが、Supabaseで確認したところ全63都市とも未入力（0件）だったことが判明。AIの一般知識ベースで全63都市分の緯度経度を算出しSQL一括UPDATEで投入（⚠️実測・API取得ではない概算値）
+- **`index.html`実装**: Leaflet 1.9.4 + OpenStreetMapタイル（unpkg CDN、APIキー不要）をヘッダーに追加。finder-panel内に「📋リストで選ぶ／🗺️地図で選ぶ」のタブ切り替えUIを新設（既存の階層検索リストはそのまま維持）。地図タブでは世界地図上に全63都市のピンを表示し、国内旅行都市は赤・海外旅行都市は緑で色分け。ピンクリックで`cities.html?q=都市名`に遷移する既存の検索結果表示の仕組みをそのまま再利用
+- **動作確認の過程で判明した点**：①ローカルの`npx serve`はクリーンURL化の際に`.html?query`のクエリパラメータを落として`/cities`にリダイレクトしてしまう仕様があり、ローカルでは`?q=`によるフィルタが正しく動作しないように見えたが、これは`serve`固有の挙動でVercel本番環境（`vercel.json`にリライト設定なし）では発生しないことをClaude in Chromeでの本番検証で確認済み②このセッションのプレビューブラウザ（Claude Browser）はSupabase等へのfetchリクエストを拡張機能でブロックすることがあり（`ERR_BLOCKED_BY_CLIENT`）、正確な検証にはClaude in Chrome（ユーザーの実Chrome）を使う必要があった
+- デスクトップ幅・モバイル幅（375px）の両方でタブ切り替え・地図表示・ピンクリックを確認、本番Vercel環境でも最終確認して完了
 
 ### 2026-09-21・追加セッション（TOP画面の国→都市選択を1ステップに統合／マレーシア・ベトナム・インドネシア追加／都市の★評価3項目追加／為替の目安表示追加）✅main反映済み・コード変更あり・DB変更あり・⚠️worktree未削除（保留、上記参照）（コミット`5508dd8`〜`1e64c91`）
 - ユーザー依頼「マレーシア、ベトナム、インドネシアを追加」＋フィードバック「国名選んだのに、その次に都市がすぐにでてこない。もっと簡単にできるでしょ」「無駄なアクションないか階層を見直して」に対応

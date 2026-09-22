@@ -47,11 +47,19 @@
 git -C "C:\Users\toshi\projects\tabisaku" worktree remove .claude/worktrees/tabisaku-a89c17
 git -C "C:\Users\toshi\projects\tabisaku" branch -D claude/tabisaku-a89c17
 ```
-**さらに2026-09-22時点で追加保留**: 今回のセッション自身が使用中のworktree`urban-info-rideshare-payment-f31204`（ブランチ`claude/urban-info-rideshare-payment-f31204`）も、自分自身の中からは削除できないため未削除。上記`tabisaku-a89c17`と合わせて、次回メインリポジトリ直下から両方まとめて片付けるとよい：
+**さらに2026-09-22時点で追加保留**: 同日中に使用した2つのworktree`urban-info-rideshare-payment-f31204`（ブランチ`claude/urban-info-rideshare-payment-f31204`）・`travel-difficulty-filter-ffd350`（ブランチ`claude/travel-difficulty-filter-ffd350`、今回のセッション自身が使用中）も、自分自身の中からは削除できないため未削除。上記`tabisaku-a89c17`と合わせて、次回メインリポジトリ直下から3つまとめて片付けるとよい：
 ```
 git -C "C:\Users\toshi\projects\tabisaku" worktree remove .claude/worktrees/urban-info-rideshare-payment-f31204
 git -C "C:\Users\toshi\projects\tabisaku" branch -D claude/urban-info-rideshare-payment-f31204
+git -C "C:\Users\toshi\projects\tabisaku" worktree remove .claude/worktrees/travel-difficulty-filter-ffd350
+git -C "C:\Users\toshi\projects\tabisaku" branch -D claude/travel-difficulty-filter-ffd350
 ```
+
+- ✅ **海外旅行の検索に初級/中級/上級のレベル選択を追加（完了・main反映済み 2026-09-22・コミット`595adc4`）**: ユーザー依頼「海外旅行でまず初級、中級、上級というのを選択できるようにして。初級だとみんなよく行く、韓国、ハワイとか超メジャーな国（都市）だけ、中級だとそれにもうすこしバリエーション、上級は全て出す」に対応
+  - 新規DB列は追加せず、既存の`ts_cities.popularity_rating`（日本人からの人気度、1〜5のAI目安値）を流用して3段階のレベルを実現：初級＝評価5のみ（15都市）／中級＝評価4以上（29都市）／上級＝全都市（62都市、フィルタなし）
+  - `index.html`のTOP階層検索に「海外旅行」→「旅行レベル（初級/中級/上級）」→「エリア」→「国・都市」の4ステップ構成に変更（従来は海外旅行→エリア→国・都市の3ステップ）。レベルごとに該当都市数をボタンに表示し、パンくずで「海外旅行」「レベル」段階にもいつでも戻れるようにした
+  - **動作確認**: ローカル`npx serve`で初級選択時に韓国・ハワイ等が北米/アジアに正しく表示されること、中級・上級で表示都市数が段階的に増えることをスクリーンショットで確認。デスクトップ幅・モバイル幅（375px）とも表示崩れなし、コンソールエラーなし
+  - コミット後、このセッション自身のworktree内から`git push origin HEAD:main`で直接main反映（このプロジェクトの標準運用を踏襲）
 
 - ✅ **都市情報に「現地で必須のアプリ」「決済事情」を追加（完了・main反映済み 2026-09-22・コミット`a97ce45`）**: ユーザー依頼「都市情報でアプリ　配車アプリなど現地でほぼ必須のもの／決済　クレカまたは現地通貨などの情報も」に対応
   - DBの更新（カラム追加・全都市データ投入）を伴うため、事前にAskUserQuestionでユーザーに方針確認してから着手
@@ -81,6 +89,14 @@ git -C "C:\Users\toshi\projects\tabisaku" branch -D claude/urban-info-rideshare-
 ---
 
 ## 📝 セッションログ
+
+### 2026-09-22・追加セッション（海外旅行の検索に初級/中級/上級のレベル選択を追加）✅main反映済み・コード変更あり・DB変更なし・⚠️worktree未削除（新規、上記参照）（コミット`595adc4`）
+- ユーザー依頼「海外旅行でまず初級、中級、上級というのを選択できるようにして。初級だとみんなよく行く、韓国、ハワイとか超メジャーな国（都市）だけ、中級だとそれにもうすこしバリエーション、上級は全て出す」に対応
+- 実装前にSupabaseで既存の`ts_cities.popularity_rating`（2026-09-21に追加済みの人気度評価列、1〜5）の分布を確認したところ、評価5=15都市・評価4以上=29都市・全体=62都市という自然な3段階が既に成立していることが判明したため、新規DB列は追加せず既存列を流用する方針に決定（DB変更なしで完結）
+- **`index.html`**: TOP画面の階層検索に新ステップ「旅行レベル」を追加し、`海外旅行→旅行レベル（初級/中級/上級）→エリア→国・都市`の4ステップに変更。`DIFFICULTY_LEVELS`定義（初級=rating≥5／中級=rating≥4／上級=rating≥0＝フィルタなし）に基づき、レベル選択後のエリア一覧・国別都市一覧をクライアント側でフィルタ。レベル選択ボタンには該当都市数を表示（例：「初級（15都市）」）。パンくずは「どこへ行きますか？›海外旅行›初級›北米」のように各段階に個別リンクを持たせ、いつでも前段階に戻れるようにした
+- **動作確認**: `.claude/launch.json`の`tabisaku-static`をローカル起動し、海外旅行→初級を選ぶと南米（評価5の都市なし）が選択肢から消えること、初級の北米にハワイ（ホノルル）・アジアに韓国（ソウル）が含まれること、パンくずで「海外旅行」に戻ると再度レベル選択画面に戻れることをスクリーンショットで確認。デスクトップ幅・モバイル幅（375px）とも表示崩れなし、コンソールエラーなし
+- **Git運用**: このセッションはworktree`travel-difficulty-filter-ffd350`（ブランチ`claude/travel-difficulty-filter-ffd350`）として開始。ローカルでコミット後、直近のセッションと同じ運用でブランチを作らず`git push origin HEAD:main`によりmainへ直接push。worktree自体はセッション内から削除できず、既存の未削除worktree群と合わせて次回片付けが必要（上記「🚧現在の作業」参照）
+- **次の宿題**: レベル分けは`popularity_rating`（AIによる人気度目安、実測データではない）に依存しているため、この評価値が将来見直されると初級/中級/上級の顔ぶれも連動して変わる。評価値と難易度区分が同じ列に依存している設計である点に留意
 
 ### 2026-09-22（都市情報に「現地で必須のアプリ」「決済事情」を追加）✅main反映済み・コード変更あり・DB変更あり・⚠️worktree未削除（新規、上記参照）（コミット`a97ce45`）
 - ユーザー依頼「都市情報で　アプリ　配車アプリなど現地でほぼ必須のもの　決済　クレカまたは現地通貨などの情報も」に対応

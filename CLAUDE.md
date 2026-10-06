@@ -29,7 +29,7 @@
 
 - `ts_prefectures` — 都道府県マスタ（旅索専用）
 - `ts_tags` — タグマスタ（`content_type`: `city` / `airport` / `credit_card`）
-- `ts_cities`（`app_info`・`payment_info`列：現地で必須のアプリ（配車アプリ等）・決済事情（クレカ普及度・現地通貨の要否）のテキスト（2026-09-22に追加、国単位でほぼ同一内容を全63都市に投入。ヴェネツィア・モンサンミッシェル・バンフは「配車アプリが使えない／限定的」という個別事情をapp_infoに反映）／`region`列：海外都市のみ`北米`/`南米`/`アジア`/`ヨーロッパ`を設定、国内はnull／`food_info`・`spots_info`列：おすすめグルメ・観光スポットのテキスト（`spots_info`は①②③④の連番形式、読みにくい漢字地名は`<ruby>`タグでルビ付き・cities.html側はエスケープせず生HTMLとして描画）／`price_hotel_jpy`・`price_hotel_local`・`price_meal_jpy`・`price_meal_local`・`price_transport_label`・`price_transport_jpy`・`price_transport_local`列：物価を円・現地通貨それぞれ別列に分けた構造化フィールド（cities.html側はCSS Gridの3列表で「項目名｜円（右揃え太字）｜現地通貨（右揃え）」の位置を縦に揃えて表示、"2026年9月頃の目安"として提示。旧`price_hotel`/`price_meal`/`price_transport_value`/`price_info`列は未使用のままDBに残存）／`exchange_rate_note`列：物価セクション冒頭に表示する為替の目安テキスト（例：「1米ドル ≈ 150円（2026年9月頃の目安）」、既存の円/現地通貨価格と整合する固定レートで通貨ごとに算出）／`tip_info`列：チップ文化の目安（国単位でほぼ同一内容、都市ごとに複製）／`flight_time_from_tokyo`・`time_diff`列：東京からのフライト時間・日本との時差（海外都市のみ、国内はnull）／`popularity_rating`・`affordability_rating`・`safety_rating`列：日本人からの人気度・物価の安さ・治安の良さを1〜5のsmallintで評価し、cities.html側は★☆で表示（いずれも実測データではなくAIによる目安・CHECK制約1〜5のみでadmin側バリデーションはなし）。いずれもadmin画面のフォームに項目あり／`lat`・`lng`列：緯度・経度（2026-09-21に全63都市分をAIの一般知識ベースで投入、実測・API取得ではない概算値。TOP画面の地図UIで使用）） / `ts_city_tags`
+- `ts_cities`（`app_info`・`payment_info`列：現地で必須のアプリ（配車アプリ等）・決済事情（クレカ普及度・現地通貨の要否）のテキスト（2026-09-22に追加、国単位でほぼ同一内容を全63都市に投入。ヴェネツィア・モンサンミッシェル・バンフは「配車アプリが使えない／限定的」という個別事情をapp_infoに反映）／`region`列：海外都市のみ`北米`/`南米`/`アジア`/`ヨーロッパ`を設定、国内はnull／`food_info`・`spots_info`列：おすすめグルメ・観光スポットのテキスト（`spots_info`は①②③④の連番形式、読みにくい漢字地名は`<ruby>`タグでルビ付き・cities.html側はエスケープせず生HTMLとして描画）／`price_hotel_jpy`・`price_hotel_local`・`price_meal_jpy`・`price_meal_local`・`price_transport_label`・`price_transport_jpy`・`price_transport_local`列：物価を円・現地通貨それぞれ別列に分けた構造化フィールド（cities.html側はCSS Gridの3列表で「項目名｜円（右揃え太字）｜現地通貨（右揃え）」の位置を縦に揃えて表示、"2026年9月頃の目安"として提示。旧`price_hotel`/`price_meal`/`price_transport_value`/`price_info`列は未使用のままDBに残存）／`exchange_rate_note`列：物価セクション冒頭に表示する為替の目安テキスト（例：「1米ドル ≈ 150円（2026年9月頃の目安）」、既存の円/現地通貨価格と整合する固定レートで通貨ごとに算出）／`tip_info`列：チップ文化の目安（国単位でほぼ同一内容、都市ごとに複製）／`flight_time_from_tokyo`・`time_diff`列：東京からのフライト時間・日本との時差（海外都市のみ、国内はnull）／`popularity_rating`・`affordability_rating`・`safety_rating`列：日本人からの人気度・物価の安さ・治安の良さを1〜5のsmallintで評価し、cities.html側は★☆で表示（いずれも実測データではなくAIによる目安・CHECK制約1〜5のみでadmin側バリデーションはなし）。いずれもadmin画面のフォームに項目あり／`lat`・`lng`列：緯度・経度（2026-09-21に全63都市分をAIの一般知識ベースで投入、実測・API取得ではない概算値。TOP画面の地図UIで使用）／`price_bigmac_jpy`・`price_bigmac_local`列：ビッグマック1個の価格を円・現地通貨で（2026-10-06に追加、全65都市分をAIの一般知識ベースで投入、物価テーブルの「食事1食」の次の行に表示）。2026-10-06時点で全65都市（国内1＋海外64、グアム・サイパンを追加）） / `ts_city_tags`
 - `ts_airports` / `ts_airport_tags`
 - `ts_credit_cards` / `ts_credit_card_tags`
 
@@ -55,6 +55,24 @@ git -C "C:\Users\toshi\projects\tabisaku" branch -D claude/urban-info-rideshare-
 git -C "C:\Users\toshi\projects\tabisaku" worktree remove .claude/worktrees/travel-difficulty-filter-ffd350
 git -C "C:\Users\toshi\projects\tabisaku" branch -D claude/travel-difficulty-filter-ffd350
 ```
+**さらに2026-10-06時点で追加保留**: 今回のセッションはworktree`urban-info-rideshare-payment-f31204`（ディレクトリ名は過去と同一だが、ブランチは新しく`claude/add-guam-saipan-c90c35`）として開始。自分自身の中からは削除できないため未削除。上記と合わせて片付けが必要：
+```
+git -C "C:\Users\toshi\projects\tabisaku" worktree remove .claude/worktrees/urban-info-rideshare-payment-f31204
+git -C "C:\Users\toshi\projects\tabisaku" branch -D claude/add-guam-saipan-c90c35
+```
+
+- ✅ **全都市の物価にビッグマック価格を追加（完了・main反映済み 2026-10-06・コミット`dfc236c`）**: ユーザー依頼「全ての都市の物価にビックマックの値段をいれて」に対応
+  - 実装方針（`ts_cities`に円・現地通貨の新規2列を追加し全65都市分投入、`cities.html`の物価テーブルに行追加、admin画面にも入力欄追加）をAskUserQuestionで確認してから着手
+  - `ts_cities`に`price_bigmac_jpy`・`price_bigmac_local`列（text）を追加し、全65都市分（グアム・サイパン含む）を国・通貨ごとにグループ化したUPDATE文で一括投入（実測調査ではなくAIの一般知識ベースの目安）
+  - `cities.html`の「💰物価の目安」テーブルに「食事1食」の次の行として「ビッグマック1個」を追加表示、`admin-x8k2qz.html`の都市フォームにも円・現地通貨の2入力欄を追加（既存の物価項目と同じパターンを踏襲）
+  - **動作確認**: ローカル`npx serve`でパリの詳細モーダルにて「ビッグマック1個：860円／€5.25」の表示を確認（既存の為替目安と整合）。デスクトップ・モバイル幅（375px）とも表示崩れなし、コンソールエラーなし。コミット後、このセッション自身のworktree内から`git push origin HEAD:main`で直接main反映
+  - **本番確認**: ユーザー依頼「本番環境で反映を確認して」に対応。ビルトインのプレビューブラウザ（Claude Browser）はSupabaseへの通信を拡張機能でブロックするため、Claude in Chrome（ユーザーの実Chrome）で本番`https://tabisaku.vercel.app/cities.html`を確認。65件の都市（グアム・サイパン含む）とグアムの詳細モーダルに「ビッグマック1個」の行が表示されることを確認済み
+  - **次の宿題**: ビッグマック価格も他の物価項目と同様、実測調査ではなくAIの一般知識に基づく目安（実際の為替・現地価格とは変動する可能性あり）
+
+- ✅ **都市にグアム・サイパンを追加（完了・main反映済み 2026-10-06・DB変更のみ）**: ユーザー依頼「グアム、サイパンを追加して」に対応
+  - `ts_cities`に新規2都市（id74：グアム、id75：サイパン）を追加。地域は`北米`（ハワイと同様、米国領として分類）、国は`アメリカ合衆国`として、他の都市と同じ全項目（概要・ベストシーズン・通貨・言語・ビザ情報・アクセス・フライト時間・時差・物価・グルメ・観光スポット・★評価・配車アプリ事情・決済事情）をAIの一般知識ベースで投入
+  - コード変更は不要（TOP画面の階層検索・地図UI・`cities.html`の国/都市プルダウンはすべてDB駆動のため、データ追加のみで自動反映）
+  - **動作確認**: ローカル`npx serve`でcities.htmlの件数増加（63→65件）、両都市の検索・詳細モーダル表示、TOP画面「海外旅行→初級→北米」でグアムが追加都市数（15→16都市）に反映されることを確認。デスクトップ・モバイル幅（375px）とも表示崩れなし、コンソールエラーなし
 
 - ✅ **旅行フレーズ集ページを新規追加（完了・main反映済み 2026-09-25・コミット`e76a657`）**: ユーザー依頼「外国語の旅行会話（タイトルも要検討）で英語、中国語、スペイン語、ドイツ語、イタリア語、フランス語などでよく使う文を日本語や各言語で10文例をのせて」に対応
   - 新規ページ`phrases.html`を追加。タイトルは「旅行フレーズ集」に決定（ユーザーからタイトル検討の依頼があったため）
@@ -106,6 +124,15 @@ git -C "C:\Users\toshi\projects\tabisaku" branch -D claude/travel-difficulty-fil
 ---
 
 ## 📝 セッションログ
+
+### 2026-10-06（グアム・サイパンの都市追加／全都市の物価にビッグマック価格を追加）✅main反映済み・コード変更あり（ビッグマック対応のみ）・DB変更あり・⚠️worktree未削除（新規、上記参照）（コミット`dfc236c`）
+- ユーザー依頼「グアム、サイパンを追加して」に対応。既存都市（ハワイ）のデータ構造を確認した上で`ts_cities`にグアム（id74）・サイパン（id75）を新規追加。地域は`北米`（ハワイと同様、米国領として分類）、他の都市と同じ全項目（概要・ベストシーズン・ビザ情報・物価・グルメ・観光スポット・★評価・配車アプリ事情・決済事情など）をAIの一般知識ベースで投入。コード変更は不要（TOP画面の階層検索・地図UI・`cities.html`の国/都市プルダウンはすべてDB駆動のため、データ追加のみで自動反映）
+- ローカル`npx serve`で、cities.htmlの件数増加（63→65件）・両都市の検索/詳細モーダル表示・TOP画面「海外旅行→初級→北米」でグアムが追加都市数（15→16都市）に反映されることを確認。デスクトップ・モバイル幅（375px）とも表示崩れなし、コンソールエラーなし
+- 続けてユーザー依頼「全ての都市の物価にビックマックの値段をいれて」に対応。DBスキーマ変更（新規2列追加）を伴うため、AskUserQuestionで実装方針（既存の物価項目と同じ円・現地通貨の2列構成で追加）を確認してから着手
+- `ts_cities`に`price_bigmac_jpy`・`price_bigmac_local`列を追加し、全65都市を国・通貨ごとにグループ化したUPDATE文で一括投入（実測調査ではなくAIの一般知識ベースの目安）。`cities.html`の「💰物価の目安」テーブルに「食事1食」の次の行として「ビッグマック1個」を追加表示、`admin-x8k2qz.html`の都市フォームにも同2項目の入力欄を追加
+- ローカル`npx serve`でパリの詳細モーダルにて「ビッグマック1個：860円／€5.25」の表示を確認（既存の為替目安と整合）。デスクトップ・モバイル幅とも表示崩れなし、コンソールエラーなしを確認しコミット（`dfc236c`）→このセッション自身のworktree内から`git push origin HEAD:main`で直接main反映
+- ユーザーから「本番環境で反映を確認して」の指示を受け対応。ビルトインのプレビューブラウザ（Claude Browser）でまず本番`https://tabisaku.vercel.app/cities.html`を開いたところ、Supabaseへの通信が拡張機能に`ERR_BLOCKED_BY_CLIENT`でブロックされ0件表示になったため、Claude in Chrome（ユーザーの実Chrome）に切り替えて再確認。65件の都市（グアム・サイパン含む）と、グアムの詳細モーダルに「ビッグマック1個」の行が表示されることを確認できた
+- **教訓**: このプロジェクトのビルトインプレビューブラウザ（Claude Browser）はSupabaseへの通信を拡張機能でブロックする既知の制限があるため（過去セッションでも同様の事象あり）、本番のSupabase連携を伴う動作確認は毎回Claude in Chrome（ユーザーの実Chrome）を使う必要がある
 
 ### 2026-09-25（一人旅限定ツアーへのリンク追加／旅行フレーズ集ページ新規追加）✅main反映済み・コード変更あり・DB変更なし・⚠️worktree未削除（既存、上記参照）（コミット`519b78c`・`e76a657`）
 - ユーザー依頼「一人旅限定ツアを検索できるようにして。HISのひとり限定、クラブツーリズム、その他あれば」に対応

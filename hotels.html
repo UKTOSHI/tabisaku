@@ -86,7 +86,7 @@ h1{font-size:24px;margin:0 0 4px;}
 
   <div class="grid" id="hotelGrid"></div>
 
-  <p class="note">※宿泊料金はシングル1室1名・朝食付きプランの全国的な目安（2026年10月時点）です。インバウンド需要の増加などを背景に、ビジネスホテルの料金は2023年頃から全国的に大きく上昇しており、東京・大阪・京都・北海道などの都市部や週末・繁忙期はこの目安を大きく上回ることが一般的です（逆に地方の平日は目安より安いこともあります）。大浴場の有無・朝食の内容も店舗によって差があるため、チェーン全体の傾向として記載しています。最新の料金・空室・設備は各社公式サイトで宿泊日を指定してご確認ください。</p>
+  <p class="note">※宿泊料金はシングル1室1名・朝食付きプランの全国的な目安（2026年10月時点）です。インバウンド需要の増加などを背景に、ビジネスホテルの料金は2023年頃から全国的に大きく上昇しており、東京・大阪・京都・北海道などの都市部や週末・繁忙期はこの目安を大きく上回ることが一般的です（逆に地方の平日は目安より安いこともあります）。大浴場の有無・朝食の内容・店舗数も店舗やブランド展開によって差があり、各社とも新規出店が続いているため、チェーン全体の傾向・概数として記載しています。最新の料金・空室・設備・店舗数は各社公式サイトでご確認ください。</p>
 </main>
 
 <footer style="border-top:1px solid var(--border);padding:24px 20px;text-align:center;font-size:12px;color:var(--sub);">
@@ -105,9 +105,11 @@ const HOTELS=[
     priceJpy:'10,000〜18,000円',
     bath:{has:true,detail:'あり（多くの店舗に天然温泉の大浴場・サウナを完備）'},
     breakfast:{type:'paid',typeLabel:'基本有料',detail:'ご当地メニュー中心の和洋バイキング（目安1,000〜2,000円。朝食付きプランなら宿泊料金に込み）'},
+    stores:'約130店舗（全国）',
     features:[
       '無料の夜食「夜鳴きそば」が名物',
-      '全国120施設以上を展開',
+      '風呂上がりの無料アイス・乳酸菌飲料サービスがある店舗も',
+      '「御宿 野乃」「ラビスタ」など上位の姉妹ブランドも展開',
       '出張・観光どちらにも人気の定番チェーン'
     ]
   },
@@ -119,10 +121,12 @@ const HOTELS=[
     priceJpy:'7,000〜12,000円',
     bath:{has:true,detail:'多くの店舗にあり（天然温泉・人工炭酸泉など店舗差あり、一部店舗はなし）'},
     breakfast:{type:'free',typeLabel:'無料',detail:'「健康朝食」がコンセプトの無料ビュッフェ（オーガニック野菜・焼きたてパンなど）'},
+    stores:'約180店舗（国内外）',
     features:[
       '駅前立地が中心で移動に便利',
-      '宿泊客満足度調査で上位の常連',
-      'コスパ重視派に人気'
+      '硬さ・高さの違う8種類から選べる「枕バー」など、睡眠の質にこだわった客室づくり',
+      '「ぐっすり研究所」による睡眠研究に基づく快眠へのこだわり',
+      '宿泊客満足度調査で上位の常連'
     ]
   },
   {
@@ -133,9 +137,11 @@ const HOTELS=[
     priceJpy:'8,000〜13,000円',
     bath:{has:true,detail:'多くの店舗にあり（天然温泉または人工温泉、店舗差あり）'},
     breakfast:{type:'free',typeLabel:'無料',detail:'ご当地料理を含む無料バイキング'},
+    stores:'約370店舗（国内）',
     features:[
       '郊外・幹線道路沿いの立地が多く車移動に便利',
       '無料駐車場完備の店舗が多い',
+      '大型コインランドリーを備える店舗が多く長期滞在にも便利',
       'Ponta・dポイントが貯まる'
     ]
   },
@@ -147,9 +153,11 @@ const HOTELS=[
     priceJpy:'7,000〜12,000円',
     bath:{has:false,detail:'基本的になし（大半の店舗は客室バス・シャワーのみ。大浴場がある店舗は少数）'},
     breakfast:{type:'free',typeLabel:'無料',detail:'「元気朝食」。おにぎり・味噌汁・漬物中心のシンプルな和朝食（ご当地メニューが付く店舗も）'},
+    stores:'約350店舗・客室数8万室超（国内最大級）',
     features:[
       '駅から徒歩数分圏内の立地が中心',
       'シンプル・コンパクトな部屋設計',
+      '全国どこでもほぼ同じ仕様の部屋で、出張のリピーターに人気',
       '会員証（クラブカード）で宿泊5%OFF'
     ]
   },
@@ -161,9 +169,11 @@ const HOTELS=[
     priceJpy:'8,000〜13,000円',
     bath:{has:true,detail:'店舗による（「ベッセルホテルカンパーナ」等サウナ付き大浴場がある店舗も、ない店舗も）'},
     breakfast:{type:'paid',typeLabel:'基本有料',detail:'バイキング形式（目安1,000〜1,500円。朝食付きプランなら宿泊料金に込み）'},
+    stores:'約35施設',
     features:[
       '西日本・沖縄エリアを中心に展開',
       'ベッセルイン／ベッセルホテル／ベッセルホテルカンパーナなど複数ブランド',
+      'ゴルフ場併設店舗などスポーツ・レジャー向けの施設も',
       '18歳以下の添い寝が無料'
     ]
   },
@@ -175,9 +185,11 @@ const HOTELS=[
     priceJpy:'12,000〜18,000円',
     bath:{has:true,detail:'あり（最上階に大浴場・サウナを備える店舗が多い）'},
     breakfast:{type:'paid',typeLabel:'基本有料',detail:'ご当地食材を使ったビュッフェ（目安2,000〜2,500円。朝食付きプランなら宿泊料金に込み）'},
+    stores:'全国5都市に展開（少数精鋭の高級路線）',
     features:[
       '「最高の朝をお届けするホテル」がコンセプト',
       '地域とのつながりを五感で体験できる内装・サービス',
+      'ロビーラウンジのコーヒースタンドなど滞在を楽しむ工夫が随所に',
       '観光地近接でやや上質な客室が多い'
     ]
   },
@@ -189,9 +201,11 @@ const HOTELS=[
     priceJpy:'7,000〜11,000円',
     bath:{has:false,detail:'基本的になし（客室にバスタブ。大浴場がある店舗は一部）'},
     breakfast:{type:'free',typeLabel:'無料',detail:'焼きたてパン・サラダ中心の洋食ビュッフェ'},
+    stores:'約95店舗以上（チョイスホテルズジャパン運営のコンフォートブランド）',
     features:[
       '米国発の外資系ホテルブランド',
       'シンプルで機能的な部屋づくり',
+      'ロードサイド型の新規出店が多く、地方都市でも利用しやすい',
       '会員制度「Choice Guest Club」でポイント・優待あり'
     ]
   }
@@ -208,6 +222,7 @@ function render(){
       <div class="facts">
         <div class="fact-row"><span class="flabel">♨️大浴場</span><span><span class="fbadge ${h.bath.has?'yes':'no'}">${h.bath.has?'あり':'なし'}</span>${escapeHtml(h.bath.detail)}</span></div>
         <div class="fact-row"><span class="flabel">🍳朝食</span><span><span class="fbadge ${h.breakfast.type}">${escapeHtml(h.breakfast.typeLabel)}</span>${escapeHtml(h.breakfast.detail)}</span></div>
+        <div class="fact-row"><span class="flabel">🏨店舗数</span><span>${escapeHtml(h.stores)}</span></div>
       </div>
       <ul>${h.features.map(f=>`<li>${escapeHtml(f)}</li>`).join('')}</ul>
       <a class="official" href="${h.url}" target="_blank" rel="noopener">公式サイトを見る →</a>
